@@ -60,13 +60,11 @@ public class HyperLocalPluginManger extends LocalPluginManager{
     public final UberPlusClassLoader uberPlusClassLoader = new UberPlusClassLoader();
 
     public HyperLocalPluginManger(){
-        //this(".");
-        super(new File("."));
-        strategy = createModPluginStrategy();
+        this(".");
     }
     
     public HyperLocalPluginManger(String rootDir) {
-        super(new File(rootDir)););
+        super(new File(rootDir));
         strategy = createModPluginStrategy();
     }
 
