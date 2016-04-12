@@ -58,14 +58,25 @@ import java.util.logging.Level;
 public class HyperLocalPluginManger extends LocalPluginManager{
     private final ModClassicPluginStrategy strategy;
     public final UberPlusClassLoader uberPlusClassLoader = new UberPlusClassLoader();
+    private final boolean checkCycles;
 
     public HyperLocalPluginManger(){
         this(".");
     }
     
+    public HyperLocalPluginManger(boolean cycles){
+        this(".", cycles);
+    }
+    
     public HyperLocalPluginManger(String rootDir) {
         super(new File(rootDir));
-        strategy = createModPluginStrategy();
+        this.strategy = createModPluginStrategy();
+        checkCycles = true;
+    }
+    public HyperLocalPluginManger(String rootDir, boolean cycles) {
+        super(new File(rootDir));
+        this.strategy = createModPluginStrategy();
+        checkCycles = cycles;
     }
 
     @Override
@@ -78,11 +89,14 @@ public class HyperLocalPluginManger extends LocalPluginManager{
     }
 
     /**
-     * Attempt to construct the web for the plugins
+     * Import plugins for use.
+     *
+     * Note: the plugin cycles section is optional because, while incredibly helpful, 
+     * it can easily cross the open file descriptors threshold crippling any other work 
+     * when processing a huge amount of plugins (several hundred).
      */
     public TaskBuilder diagramPlugins(final InitStrategy initStrategy){
-        TaskBuilder builder;
-        builder = new TaskGraphBuilder() {
+        return new TaskGraphBuilder() {
             List<File> archives;
 
             {
@@ -108,6 +122,9 @@ public class HyperLocalPluginManger extends LocalPluginManager{
 
                                         //p.isBundled = false;  //flying blind here; luckily doesn't look used
                                         plugins.add(p);
+                                        
+                                        if(p.isActive()) //omg test!
+                                            activePlugins.add(p);
                                     } catch (IOException e) {
                                         failedPlugins.add(new FailedPlugin(arc.getName(),e));
                                         throw e;
@@ -131,73 +148,65 @@ public class HyperLocalPluginManger extends LocalPluginManager{
                             });
                         }
 
-                        g.followedBy().attains(PLUGINS_LISTED).add("Checking cyclic dependencies", new Executable() {
-                            /**
-                             * Makes sure there's no cycle in dependencies.
-                             */
-                            public void run(Reactor reactor) throws Exception {
-                                try {
-                                    CyclicGraphDetector<PluginWrapper> cgd = new CyclicGraphDetector<PluginWrapper>() {
-                                        @Override
-                                        protected List<PluginWrapper> getEdges(PluginWrapper p) {
-                                            List<PluginWrapper> next = new ArrayList<PluginWrapper>();
-                                            addTo(p.getDependencies(), next);
-                                            addTo(p.getOptionalDependencies(), next);
-                                            return next;
-                                        }
-
-                                        private void addTo(List<PluginWrapper.Dependency> dependencies, List<PluginWrapper> r) {
-                                            for (PluginWrapper.Dependency d : dependencies) {
-                                                PluginWrapper p = getPlugin(d.shortName);
-                                                if (p != null)
-                                                    r.add(p);
+                        if(checkCycles){
+                            g.followedBy().attains(PLUGINS_LISTED).add("Checking cyclic dependencies", new Executable() {
+                                /**
+                                 * Makes sure there's no cycle in dependencies.
+                                 */
+                                public void run(Reactor reactor) throws Exception {
+                                    try {
+                                        CyclicGraphDetector<PluginWrapper> cgd = new CyclicGraphDetector<PluginWrapper>() {
+                                            @Override
+                                            protected List<PluginWrapper> getEdges(PluginWrapper p) {
+                                                List<PluginWrapper> next = new ArrayList<PluginWrapper>();
+                                                addTo(p.getDependencies(), next);
+                                                addTo(p.getOptionalDependencies(), next);
+                                                return next;
                                             }
-                                        }
 
-                                        @Override
-                                        protected void reactOnCycle(PluginWrapper q, List<PluginWrapper> cycle)
-                                                throws hudson.util.CyclicGraphDetector.CycleDetectedException {
-
-                                            System.out.println("FATAL: found cycle in plugin dependencies: (root="+q+", deactivating all involved) "+Util.join(cycle," -> "));
-                                            for (PluginWrapper pluginWrapper : cycle) {
-                                                pluginWrapper.setHasCycleDependency(true);
-                                                failedPlugins.add(new FailedPlugin(pluginWrapper.getShortName(), new CycleDetectedException(cycle)));
+                                            private void addTo(List<PluginWrapper.Dependency> dependencies, List<PluginWrapper> r) {
+                                                for (PluginWrapper.Dependency d : dependencies) {
+                                                    PluginWrapper p = getPlugin(d.shortName);
+                                                    if (p != null)
+                                                        r.add(p);
+                                                }
                                             }
+
+                                            @Override
+                                            protected void reactOnCycle(PluginWrapper q, List<PluginWrapper> cycle)
+                                                    throws hudson.util.CyclicGraphDetector.CycleDetectedException {
+
+                                                System.out.println("FATAL: found cycle in plugin dependencies: (root="+q+", deactivating all involved) "+Util.join(cycle," -> "));
+                                                for (PluginWrapper pluginWrapper : cycle) {
+                                                    pluginWrapper.setHasCycleDependency(true);
+                                                    failedPlugins.add(new FailedPlugin(pluginWrapper.getShortName(), new CycleDetectedException(cycle)));
+                                                }
+                                            }
+
+                                        };
+                                        cgd.run(getPlugins());
+
+                                        // obtain topologically sorted list and overwrite the list
+                                        ListIterator<PluginWrapper> litr = getPlugins().listIterator();
+                                        for (PluginWrapper p : cgd.getSorted()) {
+                                            litr.next();
+                                            litr.set(p);
+                                            if(p.isActive())
+                                                activePlugins.add(p);
                                         }
-
-                                    };
-                                    cgd.run(getPlugins());
-
-                                    // obtain topologically sorted list and overwrite the list
-                                    ListIterator<PluginWrapper> litr = getPlugins().listIterator();
-                                    for (PluginWrapper p : cgd.getSorted()) {
-                                        litr.next();
-                                        litr.set(p);
-                                        if(p.isActive())
-                                            activePlugins.add(p);
+                                    } catch (CyclicGraphDetector.CycleDetectedException e) {
+                                        stop(); // disable all plugins since classloading from them can lead to StackOverflow
+                                        throw e;    // let load fail
                                     }
-                                } catch (CyclicGraphDetector.CycleDetectedException e) {
-                                    stop(); // disable all plugins since classloading from them can lead to StackOverflow
-                                    throw e;    // let load fail
                                 }
-                            }
-                        });
+                            });
+                        }
 
                         session.addAll(g.discoverTasks(session));
                     }
                 });
             }
         };
-
-        return TaskBuilder.union(//initializerFinder, // this scans @Initializer in the core once
-                builder,new TaskGraphBuilder() {{
-                    requires(PLUGINS_LISTED).attains(PLUGINS_PREPARED).add("Loading plugins",new Executable() {
-                        public void run(Reactor session) throws Exception {
-                            System.out.println("I have survived into the custom TaskGraphBuilder methods.  From here on out it's uncharted territory");
-                            //check if the UberClassLoader has truely loaded classes -> try to load a class that gauranteely comes from an installed plugin.
-                        }
-                    });
-                }});
     }
 
     /**
@@ -223,7 +232,7 @@ public class HyperLocalPluginManger extends LocalPluginManager{
 
         @Override
         protected Class<?> findClass(String name) throws ClassNotFoundException {
-            //likely want to avoid this, but we'll deal with it right now...
+            //likely want to avoid this, but we'll deal with it right now.
             WeakReference<Class> wc = generatedClasses.get(name);
             if (wc!=null) {
                 Class c = wc.get();
@@ -335,6 +344,9 @@ public class HyperLocalPluginManger extends LocalPluginManager{
     }
 
 
+    /**
+     * A PluginStrategy that supports custom classloaders (the UberPlusClassLoader).
+     */
     public class ModClassicPluginStrategy extends ClassicPluginStrategy {
         public ModClassicPluginStrategy(PluginManager pluginManager) {
             super(pluginManager);
@@ -342,16 +354,11 @@ public class HyperLocalPluginManger extends LocalPluginManager{
 
         public <T> List<T> findComponents(Class<T> type, ClassLoader cl) {
             List<SmallSezpoz> finders = Collections.<SmallSezpoz>singletonList(new SmallSezpoz());
-            /**
-             * See {@link ExtensionFinder#scout(Class, Hudson)} for the dead lock issue and what this does.
-             */
-            //for (ExtensionFinder finder : finders) {
             for (SmallSezpoz finder : finders) {
                 finder.scout(type, cl);
             }
 
             List<ExtensionComponent<T>> r = Lists.newArrayList();
-            //for (ExtensionFinder finder : finders) {
             for (SmallSezpoz finder : finders) {
                 try {
                     r.addAll(finder.find(type, cl));
@@ -376,7 +383,7 @@ public class HyperLocalPluginManger extends LocalPluginManager{
      * for a custom ClassLoader rather than checking Jenkins
      * The only differences are:
      *   * getIndices -> ClassLoader parameter; doesn't check Jenkins
-     *   * find -> ClassLoader parameter;
+     *   * find -> ClassLoader parameter
      *   * scout -> ClassLoader parmeter
      *
      * IMPORTANT: don't use find(Class<T> type, Hudson hud) as the getIndices method will error.
@@ -393,10 +400,7 @@ public class HyperLocalPluginManger extends LocalPluginManager{
         }
 
         /**
-         * {@inheritDoc}
-         *
-         * <p>
-         * SezPoz implements value-equality of {@link IndexItem}, so
+         * Required as part of ExtensionFinder
          */
         @Override
         public synchronized ExtensionComponentSet refresh() {
@@ -404,7 +408,9 @@ public class HyperLocalPluginManger extends LocalPluginManager{
         }
 
         /**
-         * DO NOT EVER CALL (unless called after other find
+         * DO NOT EVER CALL (unless called after other find)
+         * 
+         * This was required for overriding ExtensionFinder
          */
         public <T> Collection<ExtensionComponent<T>> find(Class<T> type, Hudson hud) {
             return _find(type,getIndices(null));
