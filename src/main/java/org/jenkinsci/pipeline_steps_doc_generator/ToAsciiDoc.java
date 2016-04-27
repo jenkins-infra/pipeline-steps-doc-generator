@@ -18,6 +18,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class ToAsciiDoc{
     /** Asciidoc conversion functions. **/
     private static String header(int depth){
@@ -28,7 +32,15 @@ public class ToAsciiDoc{
         return String.join("", Collections.nCopies(depth+1, ":"));
     }
 
+    /**
+     * Convert some special tags to their asciidoc equivalents.
+     */
     private static String stripDiv(String tagged){
+        tagged = tagged.replaceAll("<(.|\n)*code?>", "`")
+          .replaceAll("<(.|\n)*pre?>", "\n----\n");
+          .replaceAll("<(.|\n)*div?>", "")
+          .replaceAll("<(.|\n)*p?>", "\n\n");
+        
         return tagged.replaceAll("<(.|\n)*?>", "").trim();
     }
 
@@ -47,10 +59,10 @@ public class ToAsciiDoc{
                 typeInfo.append("* +").append(v).append("+\n");
             }
         } else if (type instanceof ArrayType) {
-            typeInfo.append("*Array/List*\n");
+            typeInfo.append("*Array/List*\n\n");
             typeInfo.append(describeType(((ArrayType) type).getElementType(), headerLevel));
         } else if (type instanceof HomogeneousObjectType) {
-            typeInfo.append("Nested Object\n");
+            typeInfo.append("Nested Object\n\n");
             typeInfo.append(generateHelp(((HomogeneousObjectType) type).getSchemaType(), nextHeaderLevel));
         } else if (type instanceof HeterogeneousObjectType) {
             typeInfo.append("Nested Choice of Objects\n");
@@ -58,7 +70,7 @@ public class ToAsciiDoc{
                 typeInfo.append("+").append(DescribableModel.CLAZZ).append(": '").append(entry.getKey()).append("'+\n");  //FIX
                 typeInfo.append(generateHelp(entry.getValue(), nextHeaderLevel));
             }
-        } else if (type instanceof ErrorType) {
+        } else if (type instanceof ErrorType) { //Shouldn't hit this; open a ticket
             Exception x = ((ErrorType) type).getError();
             typeInfo.append("+").append(x).append("+\n");
         } else {

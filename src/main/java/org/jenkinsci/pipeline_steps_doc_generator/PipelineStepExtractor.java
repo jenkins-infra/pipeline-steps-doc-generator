@@ -34,6 +34,9 @@ public class PipelineStepExtractor {
     @Option(name="-homeDir",usage="Root directory of the plugin folder.  This serves as the root directory of the PluginManager.")
     public String homeDir = null;
     
+    @Option(name="-asciiDest",usage="Full path of the location to save the asciidoc.  Defaults to ./allAscii")
+    public String asciiDest = null;
+    
     public static void main(String[] args){
         PipelineStepExtractor pse = new PipelineStepExtractor();
         try{
@@ -43,7 +46,6 @@ public class PipelineStepExtractor {
             System.out.println("There was an error with parsing the commands, defaulting to the home directory.");
         }
         pse.generateAscii(pse.findSteps());
-        System.out.println("COMPLETED FILE PROCESSING");
     }
 
     public Map<String, Map<String, List<StepDescriptor>>> findSteps(){
@@ -158,7 +160,12 @@ public class PipelineStepExtractor {
     }
 
     public void generateAscii(Map<String, Map<String, List<StepDescriptor>>> allSteps){
-        File allAscii = new File("allAscii");
+        File allAscii;
+        if(asciiDest){
+            allAscii = new File(asciiDest);
+        } else {
+            allAscii = new File("allAscii");
+        }
         allAscii.mkdirs();
         String allAsciiPath = allAscii.getAbsolutePath();
         for(String plugin : allSteps.keySet()){
