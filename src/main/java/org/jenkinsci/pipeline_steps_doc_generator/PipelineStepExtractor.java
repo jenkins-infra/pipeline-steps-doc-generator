@@ -161,7 +161,7 @@ public class PipelineStepExtractor {
 
     public void generateAscii(Map<String, Map<String, List<StepDescriptor>>> allSteps){
         File allAscii;
-        if(asciiDest){
+        if(asciiDest != null){
             allAscii = new File(asciiDest);
         } else {
             allAscii = new File("allAscii");
