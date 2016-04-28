@@ -37,7 +37,7 @@ public class ToAsciiDoc{
      */
     private static String stripDiv(String tagged){
         tagged = tagged.replaceAll("<(.|\n)*code?>", "`")
-          .replaceAll("<(.|\n)*pre?>", "\n----\n");
+          .replaceAll("<(.|\n)*pre?>", "\n----\n")
           .replaceAll("<(.|\n)*div?>", "")
           .replaceAll("<(.|\n)*p?>", "\n\n");
         
