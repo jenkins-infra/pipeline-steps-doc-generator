@@ -45,7 +45,13 @@ public class PipelineStepExtractor {
         } catch(Exception ex){
             System.out.println("There was an error with parsing the commands, defaulting to the home directory.");
         }
-        pse.generateAscii(pse.findSteps());
+        try{
+            pse.generateAscii(pse.findSteps());
+        } catch(Exception ex){
+            System.out.println("Error in finding all the steps");
+        }
+        System.out.println("CONVERSION COMPLETE!");
+        System.exit(0); //otherwise environment hangs around
     }
 
     public Map<String, Map<String, List<StepDescriptor>>> findSteps(){

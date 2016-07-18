@@ -17,10 +17,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+//fake out unit tests
+import hudson.Main;
 
 public class ToAsciiDoc{
     /** Asciidoc conversion functions. **/
@@ -36,10 +37,10 @@ public class ToAsciiDoc{
      * Convert some special tags to their asciidoc equivalents.
      */
     private static String stripDiv(String tagged){
-        tagged = tagged.replaceAll("<(.|\n)*code?>", "`")
+        /*tagged = tagged.replaceAll("<(.|\n)*code?>", "`")
           .replaceAll("<(.|\n)*pre?>", "\n----\n")
           .replaceAll("<(.|\n)*div?>", "")
-          .replaceAll("<(.|\n)*p?>", "\n\n");
+          .replaceAll("<(.|\n)*p?>", "\n\n");*/
         
         return tagged.replaceAll("<(.|\n)*?>", "").trim();
     }
@@ -151,6 +152,8 @@ public class ToAsciiDoc{
      * @return String  total documentation for the page
      */
     public static String generatePluginHelp(String pluginName, Map<String, List<StepDescriptor>> byPlugin, boolean genHeader){
+        Main.isUnitTest = true;
+
         //TODO: if condition
         StringBuilder whole9yards = new StringBuilder();
         if(genHeader){
