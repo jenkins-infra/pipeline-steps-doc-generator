@@ -51,6 +51,7 @@ public class PipelineStepExtractor {
             System.out.println("Error in finding all the steps");
         }
         System.out.println("CONVERSION COMPLETE!");
+        System.exit(0); //otherwise environment hangs around
     }
 
     public Map<String, Map<String, List<StepDescriptor>>> findSteps(){
