@@ -96,13 +96,15 @@ public class PipelineStepExtractor {
     private Map<String, List<StepDescriptor>> processSteps(boolean optional, List<StepDescriptor> steps, Map<String, String> stepsToPlugin){
         Map<String, List<StepDescriptor>> required = new HashMap<String, List<StepDescriptor>>();
         for (StepDescriptor d : getStepDescriptors(optional, steps)) {
-            String pluginName = stepsToPlugin.get(d.getClass().getName()).trim();
-            List<StepDescriptor> allSteps = required.get(pluginName);
-            if(allSteps == null){
-                allSteps = new ArrayList<StepDescriptor>();
+            if(stepsToPlugin.get(d.getClass().getName()) != null){
+                String pluginName = stepsToPlugin.get(d.getClass().getName()).trim();
+                List<StepDescriptor> allSteps = required.get(pluginName);
+                if(allSteps == null){
+                    allSteps = new ArrayList<StepDescriptor>();
+                }
+                allSteps.add(d);
+                required.put(pluginName, allSteps);
             }
-            allSteps.add(d);
-            required.put(pluginName, allSteps);
         }
         return required;
     }
