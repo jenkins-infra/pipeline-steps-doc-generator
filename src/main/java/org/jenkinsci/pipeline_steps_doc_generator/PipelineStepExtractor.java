@@ -182,7 +182,7 @@ public class PipelineStepExtractor {
             String whole9yards = ToAsciiDoc.generatePluginHelp(plugin, byPlugin, true); 
             
             try{
-                FileUtils.writeStringToFile(new File(allAsciiPath, plugin + ".ad"), whole9yards, StandardCharsets.UTF_8);
+                FileUtils.writeStringToFile(new File(allAsciiPath, plugin + ".adoc"), whole9yards, StandardCharsets.UTF_8);
             } catch (Exception ex){
                 System.out.println("Error generating plugin file for " + plugin + ".  Skip.");
                 //continue to next plugin
