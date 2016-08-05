@@ -43,7 +43,7 @@ public class ToAsciiDoc{
         while(m.find()){
             String rep = m.group();
             rep = rep.replaceAll("\\n\\s+", "\n");
-	        m.appendReplacement(bufStr, rep);
+	        m.appendReplacement(bufStr, Matcher.quoteReplacement(rep));
         }
         m.appendTail(bufStr);
         tagged = bufStr.toString();
