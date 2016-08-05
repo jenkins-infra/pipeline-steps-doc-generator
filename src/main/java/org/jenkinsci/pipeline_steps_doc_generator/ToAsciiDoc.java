@@ -37,10 +37,23 @@ public class ToAsciiDoc{
      * Convert some special tags to their asciidoc equivalents.
      */
     private static String stripDiv(String tagged){
-        /*tagged = tagged.replaceAll("<(.|\n)*code?>", "`")
-          .replaceAll("<(.|\n)*pre?>", "\n----\n")
-          .replaceAll("<(.|\n)*div?>", "")
-          .replaceAll("<(.|\n)*p?>", "\n\n");*/
+        //strip whitespace between tags
+        Matcher m = Pattern.compile("<p>((.|\n|\r)+?)</p>").matcher(tagged);
+        StringBuffer bufStr = new StringBuffer();
+        while(m.find()){
+            String rep = m.group();
+            rep = rep.replaceAll("\\n\\s+", "\n");
+	        m.appendReplacement(bufStr, rep);
+        }
+        m.appendTail(bufStr);
+        tagged = bufStr.toString();
+
+        tagged = tagged.replaceAll("</?pre></?code>", "\n----\n")
+          .replaceAll("/?code></?pre>", "\n----\n") //otherwise hanging ``
+          .replaceAll("</?code>", "`")
+          .replaceAll("</?pre>", "\n----\n")
+          .replaceAll("</?div>", "")
+          .replaceAll("</?p>", "\n\n");
         
         return tagged.replaceAll("<(.|\n)*?>", "").trim();
     }
