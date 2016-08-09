@@ -10,6 +10,10 @@ import org.jenkinsci.plugins.structs.describable.HeterogeneousObjectType;
 import org.jenkinsci.plugins.structs.describable.HomogeneousObjectType;
 import org.jenkinsci.plugins.structs.describable.ParameterType;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
+import org.jvnet.hudson.reactor.Reactor;
+import org.jvnet.hudson.reactor.ReactorException;
+import org.jvnet.hudson.reactor.Task;
+import org.jvnet.hudson.reactor.TaskBuilder;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,11 +23,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.Stack;
 
 //fake out unit tests
 import hudson.Main;
 
-public class ToAsciiDoc{
+public class ToAsciiDoc {
+    /**
+     * Keeps track of nested {@link DescribableModel#getType()} to avoid recursion.
+     */
+    private static Stack<Class> nesting = new Stack<>();
+
     /** Asciidoc conversion functions. **/
     private static String header(int depth){
         return String.join("", Collections.nCopies(depth, "="));
@@ -99,34 +109,43 @@ public class ToAsciiDoc{
         if (help != null && !help.equals("")) {
             attrHelp.append(stripDiv(help)).append("\n");
         }
-        attrHelp.append(describeType(param.getType(), headerLevel));
+        ParameterType type = param.getType();
+        attrHelp.append(describeType(type, headerLevel));
         return attrHelp.toString();
     }
 
-    private static String generateHelp(DescribableModel model, int headerLevel) throws Exception {
-        StringBuilder total = new StringBuilder();
-        String help = model.getHelp();
-        if (help != null && !help.equals("")) {
-            total.append(helpify(help));
-        }
+    private static String generateHelp(DescribableModel<?> model, int headerLevel) throws Exception {
+        if (nesting.contains(model.getType()))
+            return "";  // if we are recursing, cut the search
+        nesting.push(model.getType());
 
-        StringBuilder optionalParams = new StringBuilder();
-        //for(DescribableParameter p : model.getParameters()){
-        for(Object o : model.getParameters()){
-            DescribableParameter p = (DescribableParameter) o;
-            if(p.isRequired()){
-                total.append("+").append(p.getName()).append("+").append(listDepth(headerLevel)).append("\n+\n");
-                total.append(generateAttrHelp(p, headerLevel));
-                total.append("\n\n");
-            } else {
-                optionalParams.append("+").append(p.getName()).append("+ (optional)").append(listDepth(headerLevel)).append("\n+\n");
-                optionalParams.append(generateAttrHelp(p, headerLevel));
-                optionalParams.append("\n\n");
+        try {
+            StringBuilder total = new StringBuilder();
+            String help = model.getHelp();
+            if (help != null && !help.equals("")) {
+                total.append(helpify(help));
             }
+
+            StringBuilder optionalParams = new StringBuilder();
+            //for(DescribableParameter p : model.getParameters()){
+            for(Object o : model.getParameters()){
+                DescribableParameter p = (DescribableParameter) o;
+                if(p.isRequired()){
+                    total.append("+").append(p.getName()).append("+").append(listDepth(headerLevel)).append("\n+\n");
+                    total.append(generateAttrHelp(p, headerLevel));
+                    total.append("\n\n");
+                } else {
+                    optionalParams.append("+").append(p.getName()).append("+ (optional)").append(listDepth(headerLevel)).append("\n+\n");
+                    optionalParams.append(generateAttrHelp(p, headerLevel));
+                    optionalParams.append("\n\n");
+                }
+            }
+            total.append(optionalParams.toString());
+
+            return total.toString();
+        } finally {
+            nesting.pop();
         }
-        total.append(optionalParams.toString());
-        
-        return total.toString();
     }
 
     /**
