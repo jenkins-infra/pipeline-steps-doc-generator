@@ -14,6 +14,7 @@ import org.jvnet.hudson.reactor.Reactor;
 import org.jvnet.hudson.reactor.ReactorException;
 import org.jvnet.hudson.reactor.Task;
 import org.jvnet.hudson.reactor.TaskBuilder;
+import org.kohsuke.stapler.NoStaplerConstructorException;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -90,13 +91,18 @@ public class ToAsciiDoc {
             typeInfo.append(generateHelp(((HomogeneousObjectType) type).getSchemaType(), nextHeaderLevel));
         } else if (type instanceof HeterogeneousObjectType) {
             typeInfo.append("Nested Choice of Objects\n");
-            for (Map.Entry<String, DescribableModel> entry : ((HeterogeneousObjectType) type).getTypes().entrySet()) {
+            for (Map.Entry<String, DescribableModel<?>> entry : ((HeterogeneousObjectType) type).getTypes().entrySet()) {
                 typeInfo.append("+").append(DescribableModel.CLAZZ).append(": '").append(entry.getKey()).append("'+\n");  //FIX
                 typeInfo.append(generateHelp(entry.getValue(), nextHeaderLevel));
             }
         } else if (type instanceof ErrorType) { //Shouldn't hit this; open a ticket
             Exception x = ((ErrorType) type).getError();
-            typeInfo.append("+").append(x).append("+\n");
+            if(x instanceof NoStaplerConstructorException) {
+                String msg = x.toString();
+                typeInfo.append("+").append(msg.substring(msg.lastIndexOf(" "))).append("+\n");
+            } else {
+                typeInfo.append("+").append(x).append("+\n");
+            }
         } else {
             assert false: type;
         }
