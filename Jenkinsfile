@@ -8,6 +8,7 @@ node('linux') {
         'PATH+JAVA=${JAVA_HOME}/bin',
         'MAVEN_OPTS=-Dmaven.repo.local=${PWD}/.m2_repo',
     ]
+    checkout scm
 
     stage('Prepare Indexer') {
         dir('pluginFolder') {
@@ -17,7 +18,7 @@ node('linux') {
                    branch: 'master'
 
             withEnv(mavenEnv) {
-                sh 'mvn clean install -DskipTests'
+                sh 'mvn -s ../settings.xml clean install -DskipTests'
             }
         }
     }
@@ -47,7 +48,7 @@ node('linux') {
             checkout scm
 
             withEnv(mavenEnv) {
-                sh 'mvn clean install -DskipTests'
+                sh 'mvn -s ../settings.xml clean install -DskipTests'
             }
 
             dir('plugins') {
