@@ -8,8 +8,8 @@ node('linux') {
         'PATH+JAVA=${JAVA_HOME}/bin',
         'MAVEN_OPTS=-Dmaven.repo.local=${PWD}/.m2_repo',
     ]
-    checkout scm
 
+    checkout scm
     stage('Prepare Indexer') {
         dir('pluginFolder') {
             git changelog: false,
@@ -26,8 +26,8 @@ node('linux') {
     stage('Run Indexer') {
         dir('pluginFolder') {
             withEnv(mavenEnv) {
-                sh 'java -verbose:gc -jar ./target/*-bin/extension-indexer*.jar -plugins ${PWD}/plugins'
-                stash includes: './plugins/*', name: 'plugins'
+                sh 'java -verbose:gc -jar ./target/*-bin/extension-indexer*.jar -plugins ./plugins'
+                stash includes: '**/*.hpi', name: 'plugins'
                 deleteDir()
             }
         }
@@ -67,3 +67,4 @@ node('linux') {
         }
     }
 }
+
