@@ -1,4 +1,4 @@
-u#!/usr/bin/env groovy
+#!/usr/bin/env groovy
 
 
 node('linux') {
