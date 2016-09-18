@@ -26,22 +26,10 @@ node('linux') {
     stage('Run Indexer') {
         dir('pluginFolder') {
             withEnv(mavenEnv) {
-                sh 'java -verbose:gc -jar ./target/*-bin/extension-indexer*.jar -plugins ./plugins'
-                stash includes: '**/*.hpi', name: 'plugins'
-                deleteDir()
+                sh 'java -verbose:gc -jar ./target/*-bin/extension-indexer*.jar -plugins ./plugins && mv plugins ..'
             }
         }
     }
-}
-
-
-node('linux') {
-    List mavenEnv = [
-        "JAVA_HOME=${tool 'jdk8'}",
-        "PATH+MVN=${tool 'mvn'}/bin",
-        'PATH+JAVA=${JAVA_HOME}/bin',
-        'MAVEN_OPTS=-Dmaven.repo.local=${PWD}/.m2_repo',
-    ]
 
     stage('Generate Documentation') {
         dir('docFolder') {
@@ -51,20 +39,18 @@ node('linux') {
                 sh 'mvn -s ../settings.xml clean install -DskipTests'
             }
 
-            dir('plugins') {
-                unstash 'plugins'
-            }
-
-            sh 'java -verbose:gc -jar ./target/*-bin/pipeline-steps-doc-generator*.jar'
+            sh 'mv ../plugins . && java -verbose:gc -jar ./target/*-bin/pipeline-steps-doc-generator*.jar'
         }
     }
 
     stage('Clean up') {
         dir('docFolder') {
             zip dir: './allAscii', glob: '', zipFile: 'allAscii.zip'
-            archive 'allAscii.zip'
-            deleteDir()
+            archiveArtifacts artifacts: 'allAscii.zip', fingerprint: true
         }
     }
+
+    /* shut. down. everything. */
+    deleteDir()
 }
 
