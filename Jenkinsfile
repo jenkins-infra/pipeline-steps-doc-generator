@@ -1,11 +1,13 @@
-#!/usr/bin/env groovy
+u#!/usr/bin/env groovy
 
 
 node('linux') {
+    deleteDir()
+
     List mavenEnv = [
         "JAVA_HOME=${tool 'jdk8'}",
         "PATH+MVN=${tool 'mvn'}/bin",
-        'PATH+JAVA=${JAVA_HOME}/bin',
+        'PATH+JDK=${JAVA_HOME}/bin',
         'MAVEN_OPTS=-Dmaven.repo.local=${PWD}/.m2_repo',
     ]
 
@@ -37,9 +39,8 @@ node('linux') {
 
             withEnv(mavenEnv) {
                 sh 'mvn -s ../settings.xml clean install -DskipTests'
+                sh 'mv ../plugins . && java -verbose:gc -jar ./target/*-bin/pipeline-steps-doc-generator*.jar'
             }
-
-            sh 'mv ../plugins . && java -verbose:gc -jar ./target/*-bin/pipeline-steps-doc-generator*.jar'
         }
     }
 
@@ -53,4 +54,5 @@ node('linux') {
     /* shut. down. everything. */
     deleteDir()
 }
+
 
