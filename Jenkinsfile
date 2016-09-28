@@ -1,7 +1,7 @@
 #!/usr/bin/env groovy
 
 
-node('linux') {
+node('puppet') {
     deleteDir()
 
     List mavenEnv = [
