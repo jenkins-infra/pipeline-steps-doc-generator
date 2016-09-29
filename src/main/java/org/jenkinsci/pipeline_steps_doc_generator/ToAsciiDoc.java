@@ -65,7 +65,7 @@ public class ToAsciiDoc {
           .replaceAll("</?pre>", "\n----\n")
           .replaceAll("</?div>", "")
           .replaceAll("</?p>", "\n\n");
-        
+
         return tagged.replaceAll("<(.|\n)*?>", "").trim();
     }
 
@@ -169,7 +169,7 @@ public class ToAsciiDoc {
         }
         return mkDesc.toString();
     }
-    
+
     /**
      * Creates a header for use in JenkinsIO and other awestruct applications.
      */
@@ -178,11 +178,11 @@ public class ToAsciiDoc {
         head.append(pluginName)
           .append("\"\n---\n:doctitle: ")
           .append(pluginName)
-		  .append("\n:notitle:\n:description:\n:author:\n:email: jenkinsci-users@googlegroups.com\n:sectanchors:\n:toc: left\n\n");
+          .append("\n:notitle:\n:description:\n:author:\n:email: jenkinsci-users@googlegroups.com\n:sectanchors:\n:toc: left\n\n");
 
         return head.toString();
     }
-    
+
     /**
      * Generate help documentation for an entire plugin.  Returns a String that can
      * be saved into a file.
@@ -197,7 +197,7 @@ public class ToAsciiDoc {
         if(genHeader){
             whole9yards.append(generateHeader(pluginName));
         }
-        
+
         whole9yards.append("== ").append(pluginName).append("\n\n");
         for(String type : byPlugin.keySet()){
             for(StepDescriptor sd : byPlugin.get(type)){
