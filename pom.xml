@@ -25,6 +25,7 @@
             </manifest>
           </archive>
         </configuration>
+        <version>3.0.2</version>
       </plugin>
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
@@ -41,6 +42,7 @@
             </configuration>
           </execution>
         </executions>
+        <version>2.6</version>
       </plugin>
     </plugins>
   </build>
