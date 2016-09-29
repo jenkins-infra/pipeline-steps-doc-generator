@@ -81,19 +81,19 @@
   <repositories>
     <repository>
       <id>repo.jenkins-ci.org</id>
-      <url>http://repo.jenkins-ci.org/public/</url>
+      <url>https://repo.jenkins-ci.org/public/</url>
     </repository>
   </repositories>
 
   <pluginRepositories>
     <pluginRepository>
       <id>repo.jenkins-ci.org</id>
-      <url>http://repo.jenkins-ci.org/public/</url>
+      <url>https://repo.jenkins-ci.org/public/</url>
     </pluginRepository>
   </pluginRepositories>
 
   <scm>
-    <connection>scm:git:git://github.com/jenkinsci/pipeline-plugin-doc-generator.git</connection>
+    <connection>scm:git:git://github.com/jenkins-infra/pipeline-plugin-doc-generator.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/jenkinsci/backend-extension-indexer.git</developerConnection>
   </scm>
 </project>
