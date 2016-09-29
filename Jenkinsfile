@@ -39,7 +39,7 @@ node('puppet') {
 
             withEnv(mavenEnv) {
                 sh 'mvn -s ../settings.xml clean install -DskipTests'
-                sh 'mv ../plugins . && java -verbose:gc -jar ./target/*-bin/pipeline-steps-doc-generator*.jar'
+                sh 'mv ../plugins . && java -verbose:gc -javaagent:./contrib/file-leak-detector.jar -jar ./target/*-bin/pipeline-steps-doc-generator*.jar'
             }
         }
     }
