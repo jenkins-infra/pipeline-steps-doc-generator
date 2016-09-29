@@ -66,7 +66,7 @@
     <dependency>
       <groupId>org.jenkins-ci.main</groupId>
       <artifactId>jenkins-core</artifactId>
-      <version>2.23</version>
+      <version>1.651</version>
     </dependency>
     <dependency>
       <groupId>javax.servlet</groupId>
