@@ -11,24 +11,31 @@ node('puppet') {
         'MAVEN_OPTS=-Dmaven.repo.local=${PWD}/.m2_repo',
     ]
 
-    checkout scm
+    stage('Checkout') {
+        checkout scm
+    }
+
     stage('Prepare Indexer') {
         dir('pluginFolder') {
-            git changelog: false,
-                     poll: false,
-                      url:'https://github.com/jenkinsci/backend-extension-indexer.git',
-                   branch: 'master'
+            timestamps {
+                git changelog: false,
+                        poll: false,
+                        url:'https://github.com/jenkinsci/backend-extension-indexer.git',
+                    branch: 'master'
 
-            withEnv(mavenEnv) {
-                sh 'mvn -s ../settings.xml clean install -DskipTests'
+                withEnv(mavenEnv) {
+                    sh 'mvn -s ../settings.xml clean install -DskipTests'
+                }
             }
         }
     }
 
     stage('Run Indexer') {
         dir('pluginFolder') {
-            withEnv(mavenEnv) {
-                sh 'java -verbose:gc -jar ./target/*-bin/extension-indexer*.jar -plugins ./plugins && mv plugins ..'
+            timestamps {
+                withEnv(mavenEnv) {
+                    sh 'java -verbose:gc -jar ./target/*-bin/extension-indexer*.jar -plugins ./plugins && mv plugins ..'
+                }
             }
         }
     }
@@ -38,16 +45,20 @@ node('puppet') {
             checkout scm
 
             withEnv(mavenEnv) {
-                sh 'mvn -s ../settings.xml clean install -DskipTests'
-                sh 'mv ../plugins . && java -verbose:gc -javaagent:./contrib/file-leak-detector.jar -jar ./target/*-bin/pipeline-steps-doc-generator*.jar'
+                timestamps {
+                    sh 'mvn -s ../settings.xml clean install -DskipTests'
+                    sh 'mv ../plugins . && java -verbose:gc -javaagent:./contrib/file-leak-detector.jar -jar ./target/*-bin/pipeline-steps-doc-generator*.jar'
+                }
             }
         }
     }
 
     stage('Clean up') {
-        dir('docFolder') {
-            zip dir: './allAscii', glob: '', zipFile: 'allAscii.zip'
-            archiveArtifacts artifacts: 'allAscii.zip', fingerprint: true
+        timestamps {
+            dir('docFolder') {
+                zip dir: './allAscii', glob: '', zipFile: 'allAscii.zip'
+                archiveArtifacts artifacts: 'allAscii.zip', fingerprint: true
+            }
         }
     }
 
