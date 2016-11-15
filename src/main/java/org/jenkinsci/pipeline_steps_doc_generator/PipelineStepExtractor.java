@@ -33,10 +33,10 @@ import java.util.TreeSet;
 public class PipelineStepExtractor {
     @Option(name="-homeDir",usage="Root directory of the plugin folder.  This serves as the root directory of the PluginManager.")
     public String homeDir = null;
-    
+
     @Option(name="-asciiDest",usage="Full path of the location to save the asciidoc.  Defaults to ./allAscii")
     public String asciiDest = null;
-    
+
     public static void main(String[] args){
         PipelineStepExtractor pse = new PipelineStepExtractor();
         try{
@@ -72,7 +72,7 @@ public class PipelineStepExtractor {
             //gather current and depricated steps
             Map<String, List<StepDescriptor>> required = processSteps(false, steps, stepsToPlugin);
             Map<String, List<StepDescriptor>> optional = processSteps(true, steps, stepsToPlugin);
-            
+
             for(String req : required.keySet()){
                 Map<String, List<StepDescriptor>> newList = new HashMap<String, List<StepDescriptor>>();
                 newList.put("Steps", required.get(req));
@@ -179,8 +179,8 @@ public class PipelineStepExtractor {
         for(String plugin : allSteps.keySet()){
             System.out.println("processing " + plugin);
             Map<String, List<StepDescriptor>> byPlugin = allSteps.get(plugin);
-            String whole9yards = ToAsciiDoc.generatePluginHelp(plugin, byPlugin, true); 
-            
+            String whole9yards = ToAsciiDoc.generatePluginHelp(plugin, byPlugin, true);
+
             try{
                 FileUtils.writeStringToFile(new File(allAsciiPath, plugin + ".adoc"), whole9yards, StandardCharsets.UTF_8);
             } catch (Exception ex){

@@ -63,11 +63,11 @@ public class HyperLocalPluginManger extends LocalPluginManager{
     public HyperLocalPluginManger(){
         this(".");
     }
-    
+
     public HyperLocalPluginManger(boolean cycles){
         this(".", cycles);
     }
-    
+
     public HyperLocalPluginManger(String rootDir) {
         super(new File(rootDir));
         this.strategy = createModPluginStrategy();
@@ -91,8 +91,8 @@ public class HyperLocalPluginManger extends LocalPluginManager{
     /**
      * Import plugins for use.
      *
-     * Note: the plugin cycles section is optional because, while incredibly helpful, 
-     * it can easily cross the open file descriptors threshold crippling any other work 
+     * Note: the plugin cycles section is optional because, while incredibly helpful,
+     * it can easily cross the open file descriptors threshold crippling any other work
      * when processing a huge amount of plugins (several hundred).
      */
     public TaskBuilder diagramPlugins(final InitStrategy initStrategy){
@@ -122,7 +122,7 @@ public class HyperLocalPluginManger extends LocalPluginManager{
 
                                         //p.isBundled = false;  //flying blind here; luckily doesn't look used
                                         plugins.add(p);
-                                        
+
                                         if(p.isActive()) //omg test!
                                             activePlugins.add(p);
                                     } catch (IOException e) {
@@ -409,7 +409,7 @@ public class HyperLocalPluginManger extends LocalPluginManager{
 
         /**
          * DO NOT EVER CALL (unless called after other find)
-         * 
+         *
          * This was required for overriding ExtensionFinder
          */
         public <T> Collection<ExtensionComponent<T>> find(Class<T> type, Hudson hud) {
