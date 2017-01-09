@@ -83,6 +83,11 @@
       <artifactId>sezpoz</artifactId>
       <version>1.12</version>
     </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>2.5.0<</version>
+    </dependency>
   </dependencies>
 
   <repositories>
