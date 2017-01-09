@@ -29,10 +29,6 @@ import org.jvnet.hudson.reactor.*;
 import static hudson.init.InitMilestone.*;
 import static java.util.logging.Level.WARNING;
 
-//might want to just depend on workflow-plugin since we're using it here.
-import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
-import org.jenkinsci.plugins.workflow.structs.DescribableHelper; //this will likely be in a separate class
-
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -63,11 +59,11 @@ public class HyperLocalPluginManger extends LocalPluginManager{
     public HyperLocalPluginManger(){
         this(".");
     }
-
+    
     public HyperLocalPluginManger(boolean cycles){
         this(".", cycles);
     }
-
+    
     public HyperLocalPluginManger(String rootDir) {
         super(new File(rootDir));
         this.strategy = createModPluginStrategy();
@@ -80,7 +76,7 @@ public class HyperLocalPluginManger extends LocalPluginManager{
     }
 
     @Override
-    public ModClassicPluginStrategy getPluginStrategy(){
+    public ModClassicPluginStrategy getPluginStrategy() {
         return strategy;
     }
 
@@ -91,8 +87,8 @@ public class HyperLocalPluginManger extends LocalPluginManager{
     /**
      * Import plugins for use.
      *
-     * Note: the plugin cycles section is optional because, while incredibly helpful,
-     * it can easily cross the open file descriptors threshold crippling any other work
+     * Note: the plugin cycles section is optional because, while incredibly helpful, 
+     * it can easily cross the open file descriptors threshold crippling any other work 
      * when processing a huge amount of plugins (several hundred).
      */
     public TaskBuilder diagramPlugins(final InitStrategy initStrategy){
@@ -122,7 +118,7 @@ public class HyperLocalPluginManger extends LocalPluginManager{
 
                                         //p.isBundled = false;  //flying blind here; luckily doesn't look used
                                         plugins.add(p);
-
+                                        
                                         if(p.isActive()) //omg test!
                                             activePlugins.add(p);
                                     } catch (IOException e) {
@@ -348,20 +344,48 @@ public class HyperLocalPluginManger extends LocalPluginManager{
      * A PluginStrategy that supports custom classloaders (the UberPlusClassLoader).
      */
     public class ModClassicPluginStrategy extends ClassicPluginStrategy {
-        public ModClassicPluginStrategy(PluginManager pluginManager) {
+        private ClassLoader classLoader;
+
+        public ModClassicPluginStrategy(HyperLocalPluginManger pluginManager) {
             super(pluginManager);
+            classLoader = pluginManager.uberPlusClassLoader;
         }
 
-        public <T> List<T> findComponents(Class<T> type, ClassLoader cl) {
+        public <T> List<ExtensionComponent<T>> findComponents(Class<T> type, Hudson hudson) {
             List<SmallSezpoz> finders = Collections.<SmallSezpoz>singletonList(new SmallSezpoz());
             for (SmallSezpoz finder : finders) {
-                finder.scout(type, cl);
+                finder.scout(type, classLoader);
+            }
+
+            List<ExtensionComponent<T>> r = Lists.newArrayList();
+            for (SmallSezpoz finder : finders) {	
+                try {
+                    r.addAll(finder.find(type, classLoader));
+                } catch (AbstractMethodError e) {
+                    // backward compatibility
+                    //nothing actually happens here...
+                }
+            }
+
+            List<ExtensionComponent<T>> filtered = Lists.newArrayList();
+            for (ExtensionComponent<T> e : r) {
+                if (ExtensionFilter.isAllowed(type, e))
+                    filtered.add(e);
+            }
+
+            return filtered;
+        }
+        
+        public <T> List<T> findComponents(Class<T> type) {
+            List<SmallSezpoz> finders = Collections.<SmallSezpoz>singletonList(new SmallSezpoz());
+            for (SmallSezpoz finder : finders) {
+                finder.scout(type, classLoader);
             }
 
             List<ExtensionComponent<T>> r = Lists.newArrayList();
             for (SmallSezpoz finder : finders) {
                 try {
-                    r.addAll(finder.find(type, cl));
+                    r.addAll(finder.find(type, classLoader));
                 } catch (AbstractMethodError e) {
                     // backward compatibility
                     //nothing actually happens here...
@@ -409,7 +433,7 @@ public class HyperLocalPluginManger extends LocalPluginManager{
 
         /**
          * DO NOT EVER CALL (unless called after other find)
-         *
+         * 
          * This was required for overriding ExtensionFinder
          */
         public <T> Collection<ExtensionComponent<T>> find(Class<T> type, Hudson hud) {
@@ -426,7 +450,7 @@ public class HyperLocalPluginManger extends LocalPluginManager{
         private <T> Collection<ExtensionComponent<T>> _find(Class<T> type, List<IndexItem<Extension,Object>> indices) {
             List<ExtensionComponent<T>> result = new ArrayList<>();
 
-            for (IndexItem<Extension,Object> item : indices) {
+            for (IndexItem<Extension,Object> item : indices) {  
                 try {
                     AnnotatedElement e = item.element();
                     Class<?> extType;

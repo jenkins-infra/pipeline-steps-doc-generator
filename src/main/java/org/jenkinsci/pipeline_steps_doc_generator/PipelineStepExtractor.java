@@ -1,9 +1,11 @@
 package org.jenkinsci.pipeline_steps_doc_generator;
 
+import hudson.MockJenkins;
 import hudson.init.InitMilestone;
 import hudson.init.InitStrategy;
 import hudson.security.ACL;
 import jenkins.InitReactorRunner;
+import jenkins.model.Jenkins;
 import org.acegisecurity.context.SecurityContextHolder;
 import org.apache.commons.io.FileUtils;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
@@ -26,6 +28,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 
+import static org.mockito.Mockito.*;
 
 /**
  * Process and find all the Pipeline steps definied in Jenkins plugins.
@@ -33,10 +36,10 @@ import java.util.TreeSet;
 public class PipelineStepExtractor {
     @Option(name="-homeDir",usage="Root directory of the plugin folder.  This serves as the root directory of the PluginManager.")
     public String homeDir = null;
-
+    
     @Option(name="-asciiDest",usage="Full path of the location to save the asciidoc.  Defaults to ./allAscii")
     public String asciiDest = null;
-
+    
     public static void main(String[] args){
         PipelineStepExtractor pse = new PipelineStepExtractor();
         try{
@@ -64,15 +67,26 @@ public class PipelineStepExtractor {
             } else {
                 spm = new HyperLocalPluginManger(homeDir, false);
             }
+
+            // Set up mocks
+            Jenkins.JenkinsHolder mockJenkinsHolder = mock(Jenkins.JenkinsHolder.class);
+            MockJenkins mJ = new MockJenkins();
+            Jenkins mockJenkins = mJ.getMockJenkins(spm);
+            when(mockJenkinsHolder.getInstance()).thenReturn(mockJenkins);
+
+            java.lang.reflect.Field jenkinsHolderField = Jenkins.class.getDeclaredField("HOLDER");
+            jenkinsHolderField.setAccessible(true);
+            jenkinsHolderField.set(null, mockJenkinsHolder);
+
             InitStrategy initStrategy = new InitStrategy();
             executeReactor(initStrategy, spm.diagramPlugins(initStrategy));
-            List<StepDescriptor> steps = spm.getPluginStrategy().findComponents(StepDescriptor.class, spm.uberPlusClassLoader);
+            List<StepDescriptor> steps = spm.getPluginStrategy().findComponents(StepDescriptor.class);
             Map<String, String> stepsToPlugin = spm.uberPlusClassLoader.getByPlugin();
 
             //gather current and depricated steps
             Map<String, List<StepDescriptor>> required = processSteps(false, steps, stepsToPlugin);
             Map<String, List<StepDescriptor>> optional = processSteps(true, steps, stepsToPlugin);
-
+            
             for(String req : required.keySet()){
                 Map<String, List<StepDescriptor>> newList = new HashMap<String, List<StepDescriptor>>();
                 newList.put("Steps", required.get(req));
@@ -93,7 +107,7 @@ public class PipelineStepExtractor {
         return completeListing;
     }
 
-    private Map<String, List<StepDescriptor>> processSteps(boolean optional, List<StepDescriptor> steps, Map<String, String> stepsToPlugin){
+    private Map<String, List<StepDescriptor>> processSteps(boolean optional, List<StepDescriptor> steps, Map<String, String> stepsToPlugin) {
         Map<String, List<StepDescriptor>> required = new HashMap<String, List<StepDescriptor>>();
         for (StepDescriptor d : getStepDescriptors(optional, steps)) {
             if(stepsToPlugin.get(d.getClass().getName()) != null){
@@ -179,8 +193,8 @@ public class PipelineStepExtractor {
         for(String plugin : allSteps.keySet()){
             System.out.println("processing " + plugin);
             Map<String, List<StepDescriptor>> byPlugin = allSteps.get(plugin);
-            String whole9yards = ToAsciiDoc.generatePluginHelp(plugin, byPlugin, true);
-
+            String whole9yards = ToAsciiDoc.generatePluginHelp(plugin, byPlugin, true); 
+            
             try{
                 FileUtils.writeStringToFile(new File(allAsciiPath, plugin + ".adoc"), whole9yards, StandardCharsets.UTF_8);
             } catch (Exception ex){

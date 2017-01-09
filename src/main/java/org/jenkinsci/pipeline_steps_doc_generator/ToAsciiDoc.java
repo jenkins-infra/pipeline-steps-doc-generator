@@ -65,7 +65,7 @@ public class ToAsciiDoc {
           .replaceAll("</?pre>", "\n----\n")
           .replaceAll("</?div>", "")
           .replaceAll("</?p>", "\n\n");
-
+        
         return tagged.replaceAll("<(.|\n)*?>", "").trim();
     }
 
@@ -97,7 +97,7 @@ public class ToAsciiDoc {
             }
         } else if (type instanceof ErrorType) { //Shouldn't hit this; open a ticket
             Exception x = ((ErrorType) type).getError();
-            if(x instanceof NoStaplerConstructorException) {
+            if(x instanceof NoStaplerConstructorException || x instanceof UnsupportedOperationException) {
                 String msg = x.toString();
                 typeInfo.append("+").append(msg.substring(msg.lastIndexOf(" "))).append("+\n");
             } else {
@@ -125,8 +125,8 @@ public class ToAsciiDoc {
             return "";  // if we are recursing, cut the search
         nesting.push(model.getType());
 
+        StringBuilder total = new StringBuilder();
         try {
-            StringBuilder total = new StringBuilder();
             String help = model.getHelp();
             if (help != null && !help.equals("")) {
                 total.append(helpify(help));
@@ -134,9 +134,9 @@ public class ToAsciiDoc {
 
             StringBuilder optionalParams = new StringBuilder();
             //for(DescribableParameter p : model.getParameters()){
-            for(Object o : model.getParameters()){
+            for(Object o : model.getParameters()) {
                 DescribableParameter p = (DescribableParameter) o;
-                if(p.isRequired()){
+                if(p.isRequired()) {
                     total.append("+").append(p.getName()).append("+").append(listDepth(headerLevel)).append("\n+\n");
                     total.append(generateAttrHelp(p, headerLevel));
                     total.append("\n\n");
@@ -147,10 +147,9 @@ public class ToAsciiDoc {
                 }
             }
             total.append(optionalParams.toString());
-
-            return total.toString();
         } finally {
             nesting.pop();
+            return total.toString();
         }
     }
 
@@ -169,7 +168,7 @@ public class ToAsciiDoc {
         }
         return mkDesc.toString();
     }
-
+    
     /**
      * Creates a header for use in JenkinsIO and other awestruct applications.
      */
@@ -178,11 +177,11 @@ public class ToAsciiDoc {
         head.append(pluginName)
           .append("\"\n---\n:doctitle: ")
           .append(pluginName)
-          .append("\n:notitle:\n:description:\n:author:\n:email: jenkinsci-users@googlegroups.com\n:sectanchors:\n:toc: left\n\n");
+		  .append("\n:notitle:\n:description:\n:author:\n:email: jenkinsci-users@googlegroups.com\n:sectanchors:\n:toc: left\n\n");
 
         return head.toString();
     }
-
+    
     /**
      * Generate help documentation for an entire plugin.  Returns a String that can
      * be saved into a file.
@@ -197,7 +196,7 @@ public class ToAsciiDoc {
         if(genHeader){
             whole9yards.append(generateHeader(pluginName));
         }
-
+        
         whole9yards.append("== ").append(pluginName).append("\n\n");
         for(String type : byPlugin.keySet()){
             for(StepDescriptor sd : byPlugin.get(type)){
