@@ -1,5 +1,11 @@
 #!/usr/bin/env groovy
 
+properties([
+    pipelineTriggers([
+        // run every Sunday
+        cron('H H * * 0')
+    ])
+])
 
 node('puppet') {
     deleteDir()
