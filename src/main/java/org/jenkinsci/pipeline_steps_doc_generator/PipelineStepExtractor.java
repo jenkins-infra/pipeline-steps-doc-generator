@@ -1,6 +1,7 @@
 package org.jenkinsci.pipeline_steps_doc_generator;
 
 import hudson.MockJenkins;
+import hudson.PluginManager;
 import hudson.init.InitMilestone;
 import hudson.init.InitStrategy;
 import hudson.security.ACL;
@@ -49,7 +50,8 @@ public class PipelineStepExtractor {
             System.out.println("There was an error with parsing the commands, defaulting to the home directory.");
         }
         try{
-            pse.generateAscii(pse.findSteps());
+            Map<String, Map<String, List<StepDescriptor>>> steps = pse.findSteps();
+            pse.generateAscii(steps, pse.pluginManager);
         } catch(Exception ex){
             System.out.println("Error in finding all the steps");
         }
@@ -57,21 +59,22 @@ public class PipelineStepExtractor {
         System.exit(0); //otherwise environment hangs around
     }
 
+    public HyperLocalPluginManger pluginManager;
+
     public Map<String, Map<String, List<StepDescriptor>>> findSteps(){
         Map<String, Map<String, List<StepDescriptor>>> completeListing = new HashMap<String, Map<String, List<StepDescriptor>>>();
         try {
             //setup
-            HyperLocalPluginManger spm;
             if(homeDir == null){
-                spm = new HyperLocalPluginManger(false);
+                pluginManager = new HyperLocalPluginManger(false);
             } else {
-                spm = new HyperLocalPluginManger(homeDir, false);
+                pluginManager = new HyperLocalPluginManger(homeDir, false);
             }
 
             // Set up mocks
             Jenkins.JenkinsHolder mockJenkinsHolder = mock(Jenkins.JenkinsHolder.class);
             MockJenkins mJ = new MockJenkins();
-            Jenkins mockJenkins = mJ.getMockJenkins(spm);
+            Jenkins mockJenkins = mJ.getMockJenkins(pluginManager);
             when(mockJenkinsHolder.getInstance()).thenReturn(mockJenkins);
 
             java.lang.reflect.Field jenkinsHolderField = Jenkins.class.getDeclaredField("HOLDER");
@@ -79,9 +82,9 @@ public class PipelineStepExtractor {
             jenkinsHolderField.set(null, mockJenkinsHolder);
 
             InitStrategy initStrategy = new InitStrategy();
-            executeReactor(initStrategy, spm.diagramPlugins(initStrategy));
-            List<StepDescriptor> steps = spm.getPluginStrategy().findComponents(StepDescriptor.class);
-            Map<String, String> stepsToPlugin = spm.uberPlusClassLoader.getByPlugin();
+            executeReactor(initStrategy, pluginManager.diagramPlugins(initStrategy));
+            List<StepDescriptor> steps = pluginManager.getPluginStrategy().findComponents(StepDescriptor.class);
+            Map<String, String> stepsToPlugin = pluginManager.uberPlusClassLoader.getByPlugin();
 
             //gather current and depricated steps
             Map<String, List<StepDescriptor>> required = processSteps(false, steps, stepsToPlugin);
@@ -181,7 +184,7 @@ public class PipelineStepExtractor {
         private static final long serialVersionUID = 1L;
     }
 
-    public void generateAscii(Map<String, Map<String, List<StepDescriptor>>> allSteps){
+    public void generateAscii(Map<String, Map<String, List<StepDescriptor>>> allSteps, PluginManager pluginManager){
         File allAscii;
         if(asciiDest != null){
             allAscii = new File(asciiDest);
@@ -193,7 +196,7 @@ public class PipelineStepExtractor {
         for(String plugin : allSteps.keySet()){
             System.out.println("processing " + plugin);
             Map<String, List<StepDescriptor>> byPlugin = allSteps.get(plugin);
-            String whole9yards = ToAsciiDoc.generatePluginHelp(plugin, byPlugin, true); 
+            String whole9yards = ToAsciiDoc.generatePluginHelp(plugin, pluginManager.getPlugin(plugin).getDisplayName(), byPlugin, true);
             
             try{
                 FileUtils.writeStringToFile(new File(allAsciiPath, plugin + ".adoc"), whole9yards, StandardCharsets.UTF_8);
