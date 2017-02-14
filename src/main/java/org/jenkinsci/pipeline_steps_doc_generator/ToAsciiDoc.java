@@ -152,9 +152,9 @@ public class ToAsciiDoc {
     private static String generateHeader(String pluginName){
         StringBuilder head = new StringBuilder("---\nlayout: simplepage\nnotitle: true\ntitle: \"");
         head.append(pluginName)
-          .append("\"\n---\n:doctitle: ")
+          .append("\"\n---\n:doctitle: \"")
           .append(pluginName)
-		  .append("\n:notitle:\n:description:\n:author:\n:email: jenkinsci-users@googlegroups.com\n:sectanchors:\n:toc: left\n\n");
+		  .append("\"\n:notitle:\n:description:\n:author:\n:email: jenkinsci-users@googlegroups.com\n:sectanchors:\n:toc: left\n\n");
 
         return head.toString();
     }
