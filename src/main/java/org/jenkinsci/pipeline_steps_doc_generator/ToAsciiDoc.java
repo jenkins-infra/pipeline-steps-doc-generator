@@ -10,6 +10,8 @@ import org.jenkinsci.plugins.structs.describable.HeterogeneousObjectType;
 import org.jenkinsci.plugins.structs.describable.HomogeneousObjectType;
 import org.jenkinsci.plugins.structs.describable.ParameterType;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
+import org.jsoup.Jsoup;
+import org.jsoup.safety.Whitelist;
 import org.jvnet.hudson.reactor.Reactor;
 import org.jvnet.hudson.reactor.ReactorException;
 import org.jvnet.hudson.reactor.Task;
@@ -44,33 +46,8 @@ public class ToAsciiDoc {
         return String.join("", Collections.nCopies(depth+1, ":"));
     }
 
-    /**
-     * Convert some special tags to their asciidoc equivalents.
-     */
-    private static String stripDiv(String tagged){
-        //strip whitespace between tags
-        Matcher m = Pattern.compile("<p>((.|\n|\r)+?)</p>").matcher(tagged);
-        StringBuffer bufStr = new StringBuffer();
-        while(m.find()){
-            String rep = m.group();
-            rep = rep.replaceAll("\\n\\s+", "\n");
-	        m.appendReplacement(bufStr, Matcher.quoteReplacement(rep));
-        }
-        m.appendTail(bufStr);
-        tagged = bufStr.toString();
-
-        tagged = tagged.replaceAll("</?pre></?code>", "\n----\n")
-          .replaceAll("/?code></?pre>", "\n----\n") //otherwise hanging ``
-          .replaceAll("</?code>", "`")
-          .replaceAll("</?pre>", "\n----\n")
-          .replaceAll("</?div>", "")
-          .replaceAll("</?p>", "\n\n");
-        
-        return tagged.replaceAll("<(.|\n)*?>", "").trim();
-    }
-
     private static String helpify(String help){
-        return "====\n"+stripDiv(help)+"\n====\n";
+        return "++++\n"+ Jsoup.clean(help, Whitelist.relaxed().addEnforcedAttribute("a", "rel", "nofollow"))+"\n++++\n";
     }
 
     private static String describeType(ParameterType type, int headerLevel) throws Exception {
@@ -99,7 +76,7 @@ public class ToAsciiDoc {
             Exception x = ((ErrorType) type).getError();
             if(x instanceof NoStaplerConstructorException || x instanceof UnsupportedOperationException) {
                 String msg = x.toString();
-                typeInfo.append("+").append(msg.substring(msg.lastIndexOf(" "))).append("+\n");
+                typeInfo.append("+").append(msg.substring(msg.lastIndexOf(" ")).trim()).append("+\n");
             } else {
                 typeInfo.append("+").append(x).append("+\n");
             }
@@ -113,7 +90,7 @@ public class ToAsciiDoc {
         StringBuilder attrHelp = new StringBuilder();
         String help = param.getHelp();
         if (help != null && !help.equals("")) {
-            attrHelp.append(stripDiv(help)).append("\n");
+            attrHelp.append(helpify(help)).append("\n");
         }
         ParameterType type = param.getType();
         attrHelp.append(describeType(type, headerLevel));
@@ -173,7 +150,7 @@ public class ToAsciiDoc {
      * Creates a header for use in JenkinsIO and other awestruct applications.
      */
     private static String generateHeader(String pluginName){
-        StringBuilder head = new StringBuilder("---\nlayout: simplepage\ntitle: \"");
+        StringBuilder head = new StringBuilder("---\nlayout: simplepage\nnotitle: true\ntitle: \"");
         head.append(pluginName)
           .append("\"\n---\n:doctitle: ")
           .append(pluginName)
@@ -188,18 +165,23 @@ public class ToAsciiDoc {
      *
      * @return String  total documentation for the page
      */
-    public static String generatePluginHelp(String pluginName, Map<String, List<StepDescriptor>> byPlugin, boolean genHeader){
+    public static String generatePluginHelp(String pluginName, String displayName, Map<String, List<StepDescriptor>> byPlugin, boolean genHeader){
         Main.isUnitTest = true;
 
         //TODO: if condition
         StringBuilder whole9yards = new StringBuilder();
         if(genHeader){
-            whole9yards.append(generateHeader(pluginName));
+            whole9yards.append(generateHeader(displayName));
         }
         
-        whole9yards.append("== ").append(pluginName).append("\n\n");
+        whole9yards.append("== ").append(displayName).append("\n\n");
         for(String type : byPlugin.keySet()){
             for(StepDescriptor sd : byPlugin.get(type)){
+                if (pluginName.equals("workflow-basic-steps") && sd.getFunctionName().equals("step")) {
+                    /* this doesn't work right */
+                    // TODO make this not super broken
+                    continue;
+                }
                 whole9yards.append(generateStepHelp(sd));
             }
         }
