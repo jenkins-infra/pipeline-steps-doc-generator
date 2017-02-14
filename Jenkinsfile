@@ -13,7 +13,7 @@ node('puppet') {
     List mavenEnv = [
         "JAVA_HOME=${tool 'jdk8'}",
         "PATH+MVN=${tool 'mvn'}/bin",
-        'PATH+JDK=${JAVA_HOME}/bin',
+        "PATH+JDK=${tool 'jdk8'}/bin",
         'MAVEN_OPTS=-Dmaven.repo.local=${PWD}/.m2_repo',
     ]
 
