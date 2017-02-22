@@ -150,7 +150,7 @@ public class ToAsciiDoc {
      * Creates a header for use in JenkinsIO and other awestruct applications.
      */
     private static String generateHeader(String pluginName){
-        StringBuilder head = new StringBuilder("---\nlayout: simplepage\nnotitle: true\ntitle: \"");
+        StringBuilder head = new StringBuilder("---\nlayout: pipelinesteps\ntitle: \"");
         head.append(pluginName)
           .append("\"\n---\n")
 		  .append("\n:notitle:\n:description:\n:author:\n:email: jenkinsci-users@googlegroups.com\n:sectanchors:\n:toc: left\n\n");
