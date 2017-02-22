@@ -174,6 +174,7 @@ public class ToAsciiDoc {
         }
         
         whole9yards.append("== ").append(displayName).append("\n\n");
+        whole9yards.append("link:https://plugins.jenkins.io/").append(pluginName).append("[View this plugin on the Plugins Index]\n\n");
         for(String type : byPlugin.keySet()){
             for(StepDescriptor sd : byPlugin.get(type)){
                 if (pluginName.equals("workflow-basic-steps") && sd.getFunctionName().equals("step")) {
