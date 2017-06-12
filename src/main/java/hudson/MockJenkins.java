@@ -26,6 +26,13 @@ import org.mockito.stubbing.Answer;
  public class MockJenkins {
      private MockExtensionLists mockLookup = new MockExtensionLists();
 
+    /**
+     * There are a few methods that need to be mocked in order for setup to work properly:
+     *     * getPluginManager -> must return HyperLocalPluginManager
+     *     * getInitLevel     -> COMPLETED; Jenkins is "setup" as soon as the pm is populated
+     *     * getExtensionList -> use the MockExtensionLists
+     *     * getPlugin        -> get the Plugin information from HyperLocalPluginManager
+     */
      public Jenkins getMockJenkins(HyperLocalPluginManger pm) {
          Jenkins mockJenkins = mock(Hudson.class); //required by ExtensionList
          when(mockJenkins.getPluginManager()).thenReturn(pm);
@@ -38,6 +45,16 @@ import org.mockito.stubbing.Answer;
                 return mockLookup.getMockExtensionList(pm, mockJenkins, (Class) args[0]);
             }
          }).when(mockJenkins).getExtensionList(any(Class.class));
+
+                  doAnswer(new Answer<Plugin>() {
+             @Override
+             public Plugin answer(InvocationOnMock invocation) throws Throwable {
+                 Object[] args = invocation.getArguments();
+                 PluginWrapper p = pm.getPlugin((Class) args[0]);
+                 if(p==null)     return null; //not actually loaded; might need an override
+                 return p.getPlugin();
+             }
+         }).when(mockJenkins).getPlugin(any(Class.class));
 
          return mockJenkins;
      }
