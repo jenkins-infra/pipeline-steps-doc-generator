@@ -7,7 +7,7 @@ properties([
     ])
 ])
 
-node('puppet') {
+node('linux') {
     deleteDir()
 
     List mavenEnv = [
