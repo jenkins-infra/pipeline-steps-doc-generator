@@ -214,14 +214,16 @@ public class ToAsciiDoc {
         }
         whole9yards.append("== ").append(directiveName).append("\n\n");
         for (Map.Entry<String, List<Descriptor>> entry : descsByPlugin.entrySet()) {
-            String pluginName = entry.getKey();
-            if (pluginName.equals("core")) {
-                whole9yards.append("Jenkins Core:\n\n");
-            } else {
-                whole9yards.append("plugin:").append(pluginName).append("[View this plugin on the Plugins Index]\n\n");
-            }
-            for (Descriptor d : entry.getValue()) {
-                whole9yards.append(generateDescribableHelp(d));
+            if (entry.getValue() != null && !entry.getValue().isEmpty()) {
+                String pluginName = entry.getKey();
+                if (pluginName.equals("core")) {
+                    whole9yards.append("Jenkins Core:\n\n");
+                } else {
+                    whole9yards.append("plugin:").append(pluginName).append("[View this plugin on the Plugins Index]\n\n");
+                }
+                for (Descriptor d : entry.getValue()) {
+                    whole9yards.append(generateDescribableHelp(d));
+                }
             }
         }
 

@@ -81,7 +81,7 @@
     <dependency>
       <groupId>org.jenkinsci.plugins</groupId>
       <artifactId>pipeline-model-extensions</artifactId>
-      <version>1.2.5-20171116.195307-2</version> <!-- Switch to release once https://github.com/jenkinsci/pipeline-model-definition-plugin/pull/219 is merged and released -->
+      <version>1.2.4</version>
     </dependency>
     <dependency>
       <groupId>net.java.sezpoz</groupId>
