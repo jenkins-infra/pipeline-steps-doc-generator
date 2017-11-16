@@ -18,6 +18,7 @@ import org.apache.commons.io.FileUtils;
 import org.jenkinsci.plugins.pipeline.modeldefinition.agent.DeclarativeAgentDescriptor;
 import org.jenkinsci.plugins.pipeline.modeldefinition.options.DeclarativeOptionDescriptor;
 import org.jenkinsci.plugins.pipeline.modeldefinition.when.DeclarativeStageConditionalDescriptor;
+import org.jenkinsci.plugins.structs.SymbolLookup;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jvnet.hudson.reactor.*;
 import org.kohsuke.args4j.CmdLineParser;
@@ -36,6 +37,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -262,7 +264,17 @@ public class PipelineStepExtractor {
         List<? extends Descriptor> descriptors = pluginManager.getPluginStrategy().findComponents(c);
         final Map<String, String> descriptorsToPlugin = pluginManager.uberPlusClassLoader.getByPlugin();
 
-        for (Descriptor d : descriptors.stream().filter(filter).collect(Collectors.toList())) {
+        // Only include steps or describables with symbols.
+        Predicate<Descriptor> fullFilter = filter.and(d -> {
+            if (d instanceof StepDescriptor) {
+                return true;
+            } else {
+                Set<String> symbols = SymbolLookup.getSymbolValue(d);
+                return !symbols.isEmpty();
+            }
+        });
+
+        for (Descriptor d : descriptors.stream().filter(fullFilter).collect(Collectors.toList())) {
             String pluginName = descriptorsToPlugin.get(d.getClass().getName());
             if (pluginName != null) {
                 pluginName = pluginName.trim();
