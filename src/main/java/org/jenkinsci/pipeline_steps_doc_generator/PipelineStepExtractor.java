@@ -237,9 +237,12 @@ public class PipelineStepExtractor {
         Map<Class<? extends Descriptor>, Predicate<Descriptor>> filters = getDeclarativeFilters();
 
         for (Map.Entry<String,List<Class<? extends Descriptor>>> entry : getDeclarativeDirectives().entrySet()) {
+            System.out.println("Generating docs for directive " + entry.getKey());
             Map<String, List<Descriptor>> pluginDescMap = new HashMap<>();
 
             for (Class<? extends Descriptor> d : entry.getValue()) {
+                Predicate<Descriptor> filter = filters.get(d);
+                System.out.println(" - Loading descriptors of type " + d.getSimpleName() + " with filter: " + (filter != null));
                 pluginDescMap = processDescriptors(d, pluginDescMap, filters.get(d));
             }
 
