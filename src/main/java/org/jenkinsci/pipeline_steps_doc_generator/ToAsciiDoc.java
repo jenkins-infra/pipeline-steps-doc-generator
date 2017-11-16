@@ -1,5 +1,7 @@
 package org.jenkinsci.pipeline_steps_doc_generator;
 
+import hudson.model.Descriptor;
+import org.jenkinsci.plugins.structs.SymbolLookup;
 import org.jenkinsci.plugins.structs.describable.ArrayType;
 import org.jenkinsci.plugins.structs.describable.AtomicType;
 import org.jenkinsci.plugins.structs.describable.DescribableModel;
@@ -12,20 +14,12 @@ import org.jenkinsci.plugins.structs.describable.ParameterType;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Whitelist;
-import org.jvnet.hudson.reactor.Reactor;
-import org.jvnet.hudson.reactor.ReactorException;
-import org.jvnet.hudson.reactor.Task;
-import org.jvnet.hudson.reactor.TaskBuilder;
 import org.kohsuke.stapler.NoStaplerConstructorException;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Set;
 import java.util.Stack;
 
 //fake out unit tests
@@ -145,7 +139,31 @@ public class ToAsciiDoc {
         }
         return mkDesc.toString();
     }
-    
+
+    /**
+     * Generate documentation for a {@link Descriptor}
+     */
+    private static String generateDescribableHelp(Descriptor d) {
+        if (d instanceof StepDescriptor) {
+            return generateStepHelp((StepDescriptor)d);
+        } else {
+            Set<String> symbols = SymbolLookup.getSymbolValue(d);
+            if (!symbols.isEmpty()) {
+                StringBuilder mkDesc = new StringBuilder(header(3)).append(" +").append(symbols.iterator().next()).append("+: ").append(d.getDisplayName()).append("\n");
+                try {
+                    mkDesc.append(generateHelp(new DescribableModel<>(d.clazz), 1)).append("\n\n");
+                } catch (Exception ex) {
+                    mkDesc.append("+").append(ex).append("+\n\n");
+                } catch (Error err) {
+                    mkDesc.append("+").append(err).append("+\n\n");
+                }
+                return mkDesc.toString();
+            } else {
+                return null;
+            }
+        }
+    }
+
     /**
      * Creates a header for use in JenkinsIO and other awestruct applications.
      */
@@ -185,6 +203,28 @@ public class ToAsciiDoc {
                 whole9yards.append(generateStepHelp(sd));
             }
         }
+        return whole9yards.toString();
+    }
+
+    public static String generateDirectiveHelp(String directiveName, Map<String, List<Descriptor>> descsByPlugin, boolean genHeader) {
+        Main.isUnitTest = true;
+        StringBuilder whole9yards = new StringBuilder();
+        if(genHeader){
+            whole9yards.append(generateHeader(directiveName));
+        }
+        whole9yards.append("== ").append(directiveName).append("\n\n");
+        for (Map.Entry<String, List<Descriptor>> entry : descsByPlugin.entrySet()) {
+            String pluginName = entry.getKey();
+            if (pluginName.equals("core")) {
+                whole9yards.append("Jenkins Core:\n\n");
+            } else {
+                whole9yards.append("plugin:").append(pluginName).append("[View this plugin on the Plugins Index]\n\n");
+            }
+            for (Descriptor d : entry.getValue()) {
+                whole9yards.append(generateDescribableHelp(d));
+            }
+        }
+
         return whole9yards.toString();
     }
 }

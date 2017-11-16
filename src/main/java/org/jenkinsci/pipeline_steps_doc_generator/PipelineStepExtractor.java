@@ -1,33 +1,44 @@
 package org.jenkinsci.pipeline_steps_doc_generator;
 
+import hudson.FilePath;
+import hudson.Launcher;
 import hudson.MockJenkins;
 import hudson.PluginManager;
 import hudson.init.InitMilestone;
 import hudson.init.InitStrategy;
+import hudson.model.Descriptor;
+import hudson.model.JobPropertyDescriptor;
+import hudson.model.ParameterDefinition;
 import hudson.security.ACL;
+import hudson.triggers.TriggerDescriptor;
 import jenkins.InitReactorRunner;
 import jenkins.model.Jenkins;
 import org.acegisecurity.context.SecurityContextHolder;
 import org.apache.commons.io.FileUtils;
+import org.jenkinsci.plugins.pipeline.modeldefinition.agent.DeclarativeAgentDescriptor;
+import org.jenkinsci.plugins.pipeline.modeldefinition.options.DeclarativeOptionDescriptor;
+import org.jenkinsci.plugins.pipeline.modeldefinition.when.DeclarativeStageConditionalDescriptor;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jvnet.hudson.reactor.*;
-import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static org.mockito.Mockito.*;
 
@@ -38,9 +49,12 @@ public class PipelineStepExtractor {
     @Option(name="-homeDir",usage="Root directory of the plugin folder.  This serves as the root directory of the PluginManager.")
     public String homeDir = null;
     
-    @Option(name="-asciiDest",usage="Full path of the location to save the asciidoc.  Defaults to ./allAscii")
+    @Option(name="-asciiDest",usage="Full path of the location to save the steps asciidoc.  Defaults to ./allAscii")
     public String asciiDest = null;
-    
+
+    @Option(name="-declarativeDest",usage="Full path of the location to save the Declarative asciidoc. Defaults to ./declarative")
+    public String declarativeDest = null;
+
     public static void main(String[] args){
         PipelineStepExtractor pse = new PipelineStepExtractor();
         try{
@@ -52,6 +66,7 @@ public class PipelineStepExtractor {
         try{
             Map<String, Map<String, List<StepDescriptor>>> steps = pse.findSteps();
             pse.generateAscii(steps, pse.pluginManager);
+            pse.generateDeclarativeAscii();
         } catch(Exception ex){
             System.out.println("Error in finding all the steps");
         }
@@ -205,5 +220,93 @@ public class PipelineStepExtractor {
                 //continue to next plugin
             }
         }
+    }
+
+    public void generateDeclarativeAscii() {
+        File declDest;
+        if (declarativeDest != null) {
+            declDest = new File(declarativeDest);
+        } else {
+            declDest = new File("declarative");
+        }
+        declDest.mkdirs();
+        String declPath = declDest.getAbsolutePath();
+
+        Map<Class<? extends Descriptor>, Predicate<Descriptor>> filters = getDeclarativeFilters();
+
+        for (Map.Entry<String,List<Class<? extends Descriptor>>> entry : getDeclarativeDirectives().entrySet()) {
+            Map<String, List<Descriptor>> pluginDescMap = new HashMap<>();
+
+            for (Class<? extends Descriptor> d : entry.getValue()) {
+                pluginDescMap = processDescriptors(d, pluginDescMap, filters.get(d));
+            }
+
+            String whole9yards = ToAsciiDoc.generateDirectiveHelp(entry.getKey(), pluginDescMap, true);
+
+            try{
+                FileUtils.writeStringToFile(new File(declPath, entry.getKey() + ".adoc"), whole9yards, StandardCharsets.UTF_8);
+            } catch (Exception ex){
+                System.out.println("Error generating directive file for " + entry.getKey() + ".  Skip.");
+                //continue to next directive
+            }
+        }
+    }
+
+    private Map<String, List<Descriptor>> processDescriptors(@Nonnull Class<? extends Descriptor> c,
+                                                             @Nonnull Map<String, List<Descriptor>> descMap,
+                                                             @CheckForNull Predicate<Descriptor> filter) {
+        // If no filter was specified, default to true.
+        if (filter == null) {
+            filter = (d) -> true;
+        }
+        List<? extends Descriptor> descriptors = pluginManager.getPluginStrategy().findComponents(c);
+        final Map<String, String> descriptorsToPlugin = pluginManager.uberPlusClassLoader.getByPlugin();
+
+        for (Descriptor d : descriptors.stream().filter(filter).collect(Collectors.toList())) {
+            String pluginName = descriptorsToPlugin.get(d.getClass().getName());
+            if (pluginName != null) {
+                pluginName = pluginName.trim();
+            } else {
+                pluginName = "core";
+            }
+            if (!descMap.containsKey(pluginName)) {
+                descMap.put(pluginName, new ArrayList<>());
+            }
+            descMap.get(pluginName).add(d);
+        }
+        return descMap;
+    }
+
+    private Map<String,List<Class<? extends Descriptor>>> getDeclarativeDirectives() {
+        Map<String,List<Class<? extends Descriptor>>> directives = new HashMap<>();
+
+        directives.put("agent", Arrays.asList(DeclarativeAgentDescriptor.class));
+        directives.put("options", Arrays.asList(JobPropertyDescriptor.class, DeclarativeOptionDescriptor.class, StepDescriptor.class));
+        directives.put("triggers", Arrays.asList(TriggerDescriptor.class));
+        directives.put("parameters", Arrays.asList(ParameterDefinition.ParameterDescriptor.class));
+        directives.put("when", Arrays.asList(DeclarativeStageConditionalDescriptor.class));
+
+        return directives;
+    }
+
+    private Map<Class<? extends Descriptor>, Predicate<Descriptor>> getDeclarativeFilters() {
+        Map<Class<? extends Descriptor>, Predicate<Descriptor>> filters = new HashMap<>();
+
+        filters.put(StepDescriptor.class, d -> {
+            if (d instanceof StepDescriptor) {
+                StepDescriptor s = (StepDescriptor) d;
+                // Note that this is lifted from org.jenkinsci.plugins.pipeline.modeldefinition.model.Options, with the
+                // blocked steps hardcoded. This could be better.
+                return s.takesImplicitBlockArgument() &&
+                        !s.getRequiredContext().contains(Launcher.class) &&
+                        !s.getRequiredContext().contains(FilePath.class) &&
+                        !s.getFunctionName().equals("node") &&
+                        !s.getFunctionName().equals("stage");
+            } else {
+                return false;
+            }
+        });
+
+        return filters;
     }
 }

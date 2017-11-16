@@ -66,7 +66,7 @@
     <dependency>
       <groupId>org.jenkins-ci.main</groupId>
       <artifactId>jenkins-core</artifactId>
-      <version>1.651</version>
+      <version>2.7.1</version>
     </dependency>
     <dependency>
       <groupId>javax.servlet</groupId>
@@ -76,7 +76,12 @@
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>structs</artifactId>
-      <version>1.5</version>
+      <version>1.10</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jenkinsci.plugins</groupId>
+      <artifactId>pipeline-model-extensions</artifactId>
+      <version>1.2.5-20171116.195307-2</version> <!-- Switch to release once https://github.com/jenkinsci/pipeline-model-definition-plugin/pull/219 is merged and released -->
     </dependency>
     <dependency>
       <groupId>net.java.sezpoz</groupId>
