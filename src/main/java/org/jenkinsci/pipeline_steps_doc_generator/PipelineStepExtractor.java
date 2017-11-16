@@ -6,6 +6,7 @@ import hudson.MockJenkins;
 import hudson.PluginManager;
 import hudson.init.InitMilestone;
 import hudson.init.InitStrategy;
+import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.JobPropertyDescriptor;
 import hudson.model.ParameterDefinition;
@@ -243,7 +244,7 @@ public class PipelineStepExtractor {
             for (Class<? extends Descriptor> d : entry.getValue()) {
                 Predicate<Descriptor> filter = filters.get(d);
                 System.out.println(" - Loading descriptors of type " + d.getSimpleName() + " with filter: " + (filter != null));
-                pluginDescMap = processDescriptors(d, pluginDescMap, filters.get(d));
+                pluginDescMap = processDescriptors(d, pluginDescMap, filter);
             }
 
             String whole9yards = ToAsciiDoc.generateDirectiveHelp(entry.getKey(), pluginDescMap, true);
@@ -304,6 +305,9 @@ public class PipelineStepExtractor {
         return directives;
     }
 
+    private static final List<String> blockedOptionSteps = Arrays.asList("node", "stage", "withEnv", "script", "withCredentials");
+    private static final List<Class<?>> blockedOptionStepContexts = Arrays.asList(Launcher.class, FilePath.class, Computer.class);
+
     private Map<Class<? extends Descriptor>, Predicate<Descriptor>> getDeclarativeFilters() {
         Map<Class<? extends Descriptor>, Predicate<Descriptor>> filters = new HashMap<>();
 
@@ -313,10 +317,8 @@ public class PipelineStepExtractor {
                 // Note that this is lifted from org.jenkinsci.plugins.pipeline.modeldefinition.model.Options, with the
                 // blocked steps hardcoded. This could be better.
                 return s.takesImplicitBlockArgument() &&
-                        !s.getRequiredContext().contains(Launcher.class) &&
-                        !s.getRequiredContext().contains(FilePath.class) &&
-                        !s.getFunctionName().equals("node") &&
-                        !s.getFunctionName().equals("stage");
+                        s.getRequiredContext().stream().noneMatch(blockedOptionStepContexts::contains) &&
+                        !blockedOptionSteps.contains(s.getFunctionName());
             } else {
                 return false;
             }
