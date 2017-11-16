@@ -9,6 +9,8 @@ import jenkins.InitReactorRunner;
 import jenkins.model.Jenkins;
 import org.acegisecurity.context.SecurityContextHolder;
 import org.apache.commons.io.FileUtils;
+import org.jenkinsci.infra.tools.HyperLocalPluginManager;
+import org.jenkinsci.infra.tools.ToAsciiDoc;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jvnet.hudson.reactor.*;
 import org.kohsuke.args4j.Argument;
@@ -59,16 +61,16 @@ public class PipelineStepExtractor {
         System.exit(0); //otherwise environment hangs around
     }
 
-    public HyperLocalPluginManger pluginManager;
+    public HyperLocalPluginManager pluginManager;
 
     public Map<String, Map<String, List<StepDescriptor>>> findSteps(){
         Map<String, Map<String, List<StepDescriptor>>> completeListing = new HashMap<String, Map<String, List<StepDescriptor>>>();
         try {
             //setup
             if(homeDir == null){
-                pluginManager = new HyperLocalPluginManger(false);
+                pluginManager = new HyperLocalPluginManager(false);
             } else {
-                pluginManager = new HyperLocalPluginManger(homeDir, false);
+                pluginManager = new HyperLocalPluginManager(homeDir, false);
             }
 
             // Set up mocks
