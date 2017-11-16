@@ -10,6 +10,7 @@ import jenkins.model.Jenkins;
 import org.acegisecurity.context.SecurityContextHolder;
 import org.apache.commons.io.FileUtils;
 import org.jenkinsci.infra.tools.HyperLocalPluginManager;
+import org.jenkinsci.infra.tools.ToAsciiDoc;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jvnet.hudson.reactor.*;
 import org.kohsuke.args4j.Argument;
