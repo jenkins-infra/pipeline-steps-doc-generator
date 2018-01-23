@@ -63,7 +63,8 @@ node('linux') {
         timestamps {
             dir('docFolder') {
                 zip dir: './allAscii', glob: '', zipFile: 'allAscii.zip'
-                archiveArtifacts artifacts: 'allAscii.zip', fingerprint: true
+                zip dir: './declarative', glob: '', zipFile: 'declarative.zip'
+                archiveArtifacts artifacts: 'allAscii.zip,declarative.zip', fingerprint: true
             }
         }
     }
