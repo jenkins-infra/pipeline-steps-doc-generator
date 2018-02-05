@@ -4,9 +4,11 @@ import hudson.FilePath;
 import hudson.Launcher;
 import hudson.MockJenkins;
 import hudson.PluginManager;
+import hudson.PluginWrapper;
 import hudson.init.InitMilestone;
 import hudson.init.InitStrategy;
 import hudson.model.Computer;
+import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.JobPropertyDescriptor;
 import hudson.model.ParameterDefinition;
@@ -20,6 +22,9 @@ import org.jenkinsci.plugins.pipeline.modeldefinition.agent.DeclarativeAgentDesc
 import org.jenkinsci.plugins.pipeline.modeldefinition.options.DeclarativeOptionDescriptor;
 import org.jenkinsci.plugins.pipeline.modeldefinition.when.DeclarativeStageConditionalDescriptor;
 import org.jenkinsci.plugins.structs.SymbolLookup;
+import org.jenkinsci.plugins.structs.describable.DescribableModel;
+import org.jenkinsci.plugins.structs.describable.DescribableParameter;
+import org.jenkinsci.plugins.structs.describable.HeterogeneousObjectType;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jvnet.hudson.reactor.*;
 import org.kohsuke.args4j.CmdLineParser;
@@ -64,13 +69,15 @@ public class PipelineStepExtractor {
             CmdLineParser p = new CmdLineParser(pse);
             p.parseArgument(args);
         } catch(Exception ex){
+            ex.printStackTrace();
             System.out.println("There was an error with parsing the commands, defaulting to the home directory.");
         }
         try{
-            Map<String, Map<String, List<StepDescriptor>>> steps = pse.findSteps();
+            Map<String, Map<String, List<QuasiDescriptor>>> steps = pse.findSteps();
             pse.generateAscii(steps, pse.pluginManager);
             pse.generateDeclarativeAscii();
         } catch(Exception ex){
+            ex.printStackTrace();
             System.out.println("Error in finding all the steps");
         }
         System.out.println("CONVERSION COMPLETE!");
@@ -79,8 +86,8 @@ public class PipelineStepExtractor {
 
     public HyperLocalPluginManger pluginManager;
 
-    public Map<String, Map<String, List<StepDescriptor>>> findSteps(){
-        Map<String, Map<String, List<StepDescriptor>>> completeListing = new HashMap<String, Map<String, List<StepDescriptor>>>();
+    public Map<String, Map<String, List<QuasiDescriptor>>> findSteps(){
+        Map<String, Map<String, List<QuasiDescriptor>>> completeListing = new HashMap<>();
         try {
             //setup
             if(homeDir == null){
@@ -105,40 +112,70 @@ public class PipelineStepExtractor {
             Map<String, String> stepsToPlugin = pluginManager.uberPlusClassLoader.getByPlugin();
 
             //gather current and depricated steps
-            Map<String, List<StepDescriptor>> required = processSteps(false, steps, stepsToPlugin);
-            Map<String, List<StepDescriptor>> optional = processSteps(true, steps, stepsToPlugin);
+            Map<String, List<QuasiDescriptor>> required = processSteps(false, steps, stepsToPlugin);
+            Map<String, List<QuasiDescriptor>> optional = processSteps(true, steps, stepsToPlugin);
             
             for(String req : required.keySet()){
-                Map<String, List<StepDescriptor>> newList = new HashMap<String, List<StepDescriptor>>();
+                Map<String, List<QuasiDescriptor>> newList = new HashMap<String, List<QuasiDescriptor>>();
                 newList.put("Steps", required.get(req));
                 completeListing.put(req, newList);
             }
             for(String opt : optional.keySet()){
-                Map<String, List<StepDescriptor>> exists = completeListing.get(opt);
+                Map<String, List<QuasiDescriptor>> exists = completeListing.get(opt);
                 if(exists == null){
-                    exists = new HashMap<String, List<StepDescriptor>>();
+                    exists = new HashMap<>();
                 }
                 exists.put("Advanced/Deprecated Steps",optional.get(opt));
                 completeListing.put(opt, exists);
             }
         } catch (Exception ex){
+            ex.printStackTrace();
             //log exception, job essentially fails
         }
 
         return completeListing;
     }
 
-    private Map<String, List<StepDescriptor>> processSteps(boolean optional, List<StepDescriptor> steps, Map<String, String> stepsToPlugin) {
-        Map<String, List<StepDescriptor>> required = new HashMap<String, List<StepDescriptor>>();
+    private Map<String, List<QuasiDescriptor>> processSteps(boolean optional, List<StepDescriptor> steps, Map<String, String> stepsToPlugin) {
+        Map<String, List<QuasiDescriptor>> required = new HashMap<>();
         for (StepDescriptor d : getStepDescriptors(optional, steps)) {
             if(stepsToPlugin.get(d.getClass().getName()) != null){
                 String pluginName = stepsToPlugin.get(d.getClass().getName()).trim();
-                List<StepDescriptor> allSteps = required.get(pluginName);
+                List<QuasiDescriptor> allSteps = required.get(pluginName);
                 if(allSteps == null){
-                    allSteps = new ArrayList<StepDescriptor>();
+                    allSteps = new ArrayList<>();
+                    required.put(pluginName, allSteps);
                 }
-                allSteps.add(d);
-                required.put(pluginName, allSteps);
+                allSteps.add(new QuasiDescriptor(d));
+                if (d.isMetaStep()) {
+                    DescribableModel<?> m = DescribableModel.of(d.clazz);
+                    Collection<DescribableParameter> parameters = m.getParameters();
+                    if (parameters.size() == 1) {
+                        DescribableParameter delegate = parameters.iterator().next();
+                        if (delegate.isRequired()) {
+                            if (delegate.getType() instanceof HeterogeneousObjectType) {
+                                for (DescribableModel<?> delegateOptionSchema : ((HeterogeneousObjectType) delegate.getType()).getTypes().values()) {
+                                    Class<?> delegateOptionType = delegateOptionSchema.getType();
+                                    Descriptor<?> delegateDescriptor = Jenkins.getInstance().getDescriptor(delegateOptionType.asSubclass(Describable.class));
+                                    // TODO for some reason, stepsToPlugin contains entries for descriptors but not their describables:
+                                    String nestedPluginName = stepsToPlugin.get(delegateDescriptor.getClass().getName());
+                                    if (nestedPluginName == null) {
+                                        nestedPluginName = "core";
+                                    }
+                                    Set<String> symbols = SymbolLookup.getSymbolValue(delegateDescriptor);
+                                    if (!symbols.isEmpty()) {
+                                        List<QuasiDescriptor> nestedSteps = required.get(nestedPluginName);
+                                        if (nestedSteps == null) {
+                                            nestedSteps = new ArrayList<>();
+                                            required.put(nestedPluginName, nestedSteps);
+                                        }
+                                        nestedSteps.add(new QuasiDescriptor(delegateDescriptor));
+                                    }
+                                }
+                            }
+                        }
+                    } // TODO currently not handling metasteps with other parameters, either required or (like GenericSCMStep) not
+                }
             }
         }
         return required;
@@ -202,7 +239,7 @@ public class PipelineStepExtractor {
         private static final long serialVersionUID = 1L;
     }
 
-    public void generateAscii(Map<String, Map<String, List<StepDescriptor>>> allSteps, PluginManager pluginManager){
+    public void generateAscii(Map<String, Map<String, List<QuasiDescriptor>>> allSteps, PluginManager pluginManager){
         File allAscii;
         if(asciiDest != null){
             allAscii = new File(asciiDest);
@@ -213,12 +250,14 @@ public class PipelineStepExtractor {
         String allAsciiPath = allAscii.getAbsolutePath();
         for(String plugin : allSteps.keySet()){
             System.out.println("processing " + plugin);
-            Map<String, List<StepDescriptor>> byPlugin = allSteps.get(plugin);
-            String whole9yards = ToAsciiDoc.generatePluginHelp(plugin, pluginManager.getPlugin(plugin).getDisplayName(), byPlugin, true);
+            Map<String, List<QuasiDescriptor>> byPlugin = allSteps.get(plugin);
+            PluginWrapper thePlugin = pluginManager.getPlugin(plugin);
+            String whole9yards = ToAsciiDoc.generatePluginHelp(plugin, thePlugin == null ? "Core" : thePlugin.getDisplayName(), byPlugin, true);
             
             try{
                 FileUtils.writeStringToFile(new File(allAsciiPath, plugin + ".adoc"), whole9yards, StandardCharsets.UTF_8);
             } catch (Exception ex){
+                ex.printStackTrace();
                 System.out.println("Error generating plugin file for " + plugin + ".  Skip.");
                 //continue to next plugin
             }
@@ -252,6 +291,7 @@ public class PipelineStepExtractor {
             try{
                 FileUtils.writeStringToFile(new File(declPath, entry.getKey() + ".adoc"), whole9yards, StandardCharsets.UTF_8);
             } catch (Exception ex){
+                ex.printStackTrace();
                 System.out.println("Error generating directive file for " + entry.getKey() + ".  Skip.");
                 //continue to next directive
             }

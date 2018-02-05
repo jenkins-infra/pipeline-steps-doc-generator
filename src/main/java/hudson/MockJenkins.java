@@ -13,8 +13,8 @@
  */
  package hudson;
 
-import hudson.ExtensionList;
 import hudson.init.InitMilestone;
+import hudson.model.Descriptor;
 import hudson.model.Hudson; //only needed until Hudson reference is removed from the ExtensionList.
 import jenkins.model.Jenkins;
 import org.jenkinsci.pipeline_steps_doc_generator.HyperLocalPluginManger;
@@ -33,6 +33,7 @@ import org.mockito.stubbing.Answer;
      *     * getExtensionList -> use the MockExtensionLists
      *     * getPlugin        -> get the Plugin information from HyperLocalPluginManager
      */
+     @SuppressWarnings({"unchecked", "rawtypes"})
      public Jenkins getMockJenkins(HyperLocalPluginManger pm) {
          Jenkins mockJenkins = mock(Hudson.class); //required by ExtensionList
          when(mockJenkins.getPluginManager()).thenReturn(pm);
@@ -45,6 +46,17 @@ import org.mockito.stubbing.Answer;
                 return mockLookup.getMockExtensionList(pm, mockJenkins, (Class) args[0]);
             }
          }).when(mockJenkins).getExtensionList(any(Class.class));
+
+         doAnswer(invocation -> {
+             Object[] args = invocation.getArguments();
+             for (Object _d : mockLookup.getMockExtensionList(pm, mockJenkins, Descriptor.class)) {
+                 Descriptor d = (Descriptor) _d;
+                 if (d.clazz == args[0]) {
+                     return d;
+                 }
+             }
+             return null;
+         }).when(mockJenkins).getDescriptor(any(Class.class));
 
                   doAnswer(new Answer<Plugin>() {
              @Override
