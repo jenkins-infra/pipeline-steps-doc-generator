@@ -16,11 +16,13 @@ import org.jsoup.Jsoup;
 import org.jsoup.safety.Whitelist;
 import org.kohsuke.stapler.NoStaplerConstructorException;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
+import java.util.stream.Collectors;
 
 //fake out unit tests
 import hudson.Main;
@@ -36,43 +38,44 @@ public class ToAsciiDoc {
         return String.join("", Collections.nCopies(depth, "="));
     }
 
-    private static String listDepth(int depth){
-        return String.join("", Collections.nCopies(depth+1, ":"));
-    }
-
     private static String helpify(String help){
-        return "++++\n"+ Jsoup.clean(help, Whitelist.relaxed().addEnforcedAttribute("a", "rel", "nofollow"))+"\n++++\n";
+        return Jsoup.clean(help, Whitelist.relaxed().addEnforcedAttribute("a", "rel", "nofollow")) + "\n";
     }
 
-    private static String describeType(ParameterType type, int headerLevel) throws Exception {
+    private static String describeType(ParameterType type) throws Exception {
         StringBuilder typeInfo = new StringBuilder();
-        int nextHeaderLevel = Math.min(6, headerLevel + 1);
         if (type instanceof AtomicType) {
-            typeInfo.append("*Type:* ").append(type).append("\n");
+            typeInfo.append("<li><b>Type:</b> <code>").append(type).append("</code></li>");
         } else if (type instanceof EnumType) {
-            typeInfo.append("*Values:*\n\n");
-            for (String v : ((EnumType) type).getValues()) {
-                typeInfo.append("* +").append(v).append("+\n");
-            }
+            typeInfo
+                  .append("<li><b>Values:</b> ")
+                  .append(Arrays.stream((((EnumType) type).getValues())).map(v -> "<code>" + v + "</code>").collect(Collectors.joining(", ")))
+                  .append("</li>");
         } else if (type instanceof ArrayType) {
-            typeInfo.append("*Array/List*\n\n");
-            typeInfo.append(describeType(((ArrayType) type).getElementType(), headerLevel));
+            typeInfo
+                  .append("<b>Array/List</b><br/>\n")
+                  .append(describeType(((ArrayType) type).getElementType()));
         } else if (type instanceof HomogeneousObjectType) {
-            typeInfo.append("Nested Object\n\n");
-            typeInfo.append(generateHelp(((HomogeneousObjectType) type).getSchemaType(), nextHeaderLevel));
+            typeInfo
+                  .append("<b>Nested Object</b>\n")
+                  .append(generateHelp(((HomogeneousObjectType) type).getSchemaType(), false));
         } else if (type instanceof HeterogeneousObjectType) {
-            typeInfo.append("Nested Choice of Objects\n");
+            typeInfo
+                  .append("<b>Nested Choice of Objects</b>\n");
             for (Map.Entry<String, DescribableModel<?>> entry : ((HeterogeneousObjectType) type).getTypes().entrySet()) {
-                typeInfo.append("+").append(DescribableModel.CLAZZ).append(": '").append(entry.getKey()).append("'+\n");  //FIX
-                typeInfo.append(generateHelp(entry.getValue(), nextHeaderLevel));
+                typeInfo
+                      .append("<li><code>")
+                      .append(DescribableModel.CLAZZ).append("</code>: <code>")
+                      .append(entry.getKey()).append("</code></li>\n")
+                      .append(generateHelp(entry.getValue(), true));
             }
         } else if (type instanceof ErrorType) { //Shouldn't hit this; open a ticket
             Exception x = ((ErrorType) type).getError();
             if(x instanceof NoStaplerConstructorException || x instanceof UnsupportedOperationException) {
                 String msg = x.toString();
-                typeInfo.append("+").append(msg.substring(msg.lastIndexOf(" ")).trim()).append("+\n");
+                typeInfo.append("<code>").append(msg.substring(msg.lastIndexOf(" ")).trim()).append("</code>\n");
             } else {
-                typeInfo.append("+").append(x).append("+\n");
+                typeInfo.append("<code>").append(x).append("</code>\n");
             }
         } else {
             assert false: type;
@@ -80,18 +83,18 @@ public class ToAsciiDoc {
         return typeInfo.toString();
     }
 
-    private static String generateAttrHelp(DescribableParameter param, int headerLevel) throws Exception {
+    private static String generateAttrHelp(DescribableParameter param) throws Exception {
         StringBuilder attrHelp = new StringBuilder();
         String help = param.getHelp();
         if (help != null && !help.equals("")) {
             attrHelp.append(helpify(help)).append("\n");
         }
         ParameterType type = param.getType();
-        attrHelp.append(describeType(type, headerLevel));
+        attrHelp.append("<ul>").append(describeType(type)).append("</ul>");
         return attrHelp.toString();
     }
 
-    private static String generateHelp(DescribableModel<?> model, int headerLevel) throws Exception {
+    private static String generateHelp(DescribableModel<?> model, boolean indent) throws Exception {
         if (nesting.contains(model.getType()))
             return "";  // if we are recursing, cut the search
         nesting.push(model.getType());
@@ -103,21 +106,29 @@ public class ToAsciiDoc {
                 total.append(helpify(help));
             }
 
+            if (indent) {
+                total.append("<ul>");
+            }
             StringBuilder optionalParams = new StringBuilder();
             //for(DescribableParameter p : model.getParameters()){
             for(Object o : model.getParameters()) {
                 DescribableParameter p = (DescribableParameter) o;
                 if(p.isRequired()) {
-                    total.append("+").append(p.getName()).append("+").append(listDepth(headerLevel)).append("\n+\n");
-                    total.append(generateAttrHelp(p, headerLevel));
-                    total.append("\n\n");
+                    total
+                          .append("<li><code>").append(p.getName()).append("</code>").append("\n")
+                          .append(generateAttrHelp(p))
+                          .append("</li>\n");
                 } else {
-                    optionalParams.append("+").append(p.getName()).append("+ (optional)").append(listDepth(headerLevel)).append("\n+\n");
-                    optionalParams.append(generateAttrHelp(p, headerLevel));
-                    optionalParams.append("\n\n");
+                    optionalParams
+                          .append("<li><code>").append(p.getName()).append("</code> (optional)").append("\n")
+                          .append(generateAttrHelp(p))
+                          .append("</li>\n");
                 }
             }
             total.append(optionalParams.toString());
+            if (indent) {
+                total.append("</ul>");
+            }
         } finally {
             nesting.pop();
             return total.toString();
@@ -129,15 +140,16 @@ public class ToAsciiDoc {
      */
     public static String generateStepHelp(StepDescriptor d){
         StringBuilder mkDesc = new StringBuilder(header(3)).append(" +").append(d.getFunctionName()).append("+: ").append(d.getDisplayName()).append("\n");
+        mkDesc.append("++++\n");
         try{
-            mkDesc.append(generateHelp(new DescribableModel(d.clazz), 1))
+            mkDesc.append(generateHelp(new DescribableModel(d.clazz), true))
                 .append("\n\n");
         } catch(Exception ex){
-            mkDesc.append("+").append(ex).append("+\n\n");
+            mkDesc.append("<code>").append(ex).append("</code>\n\n");
         } catch(Error err){
-            mkDesc.append("+").append(err).append("+\n\n");
+            mkDesc.append("<code>").append(err).append("</code>\n\n");
         }
-        return mkDesc.toString();
+        return mkDesc.append("\n++++\n").toString();
     }
 
     /**
@@ -151,7 +163,7 @@ public class ToAsciiDoc {
             if (!symbols.isEmpty()) {
                 StringBuilder mkDesc = new StringBuilder(header(3)).append(" +").append(symbols.iterator().next()).append("+: ").append(d.getDisplayName()).append("\n");
                 try {
-                    mkDesc.append(generateHelp(new DescribableModel<>(d.clazz), 1)).append("\n\n");
+                    mkDesc.append(generateHelp(new DescribableModel<>(d.clazz), true)).append("\n\n");
                 } catch (Exception ex) {
                     mkDesc.append("+").append(ex).append("+\n\n");
                 } catch (Error err) {
