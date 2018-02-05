@@ -39,7 +39,7 @@ public class ToAsciiDoc {
     }
 
     private static String helpify(String help){
-        return Jsoup.clean(help, Whitelist.relaxed().addEnforcedAttribute("a", "rel", "nofollow")) + "\n";
+        return "<div>" + Jsoup.clean(help, Whitelist.relaxed().addEnforcedAttribute("a", "rel", "nofollow")) + "</div>\n";
     }
 
     private static String describeType(ParameterType type) throws Exception {
