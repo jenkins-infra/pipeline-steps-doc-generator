@@ -64,6 +64,7 @@ public class PipelineStepExtractor {
             CmdLineParser p = new CmdLineParser(pse);
             p.parseArgument(args);
         } catch(Exception ex){
+            ex.printStackTrace();
             System.out.println("There was an error with parsing the commands, defaulting to the home directory.");
         }
         try{
@@ -71,6 +72,7 @@ public class PipelineStepExtractor {
             pse.generateAscii(steps, pse.pluginManager);
             pse.generateDeclarativeAscii();
         } catch(Exception ex){
+            ex.printStackTrace();
             System.out.println("Error in finding all the steps");
         }
         System.out.println("CONVERSION COMPLETE!");
@@ -122,6 +124,7 @@ public class PipelineStepExtractor {
                 completeListing.put(opt, exists);
             }
         } catch (Exception ex){
+            ex.printStackTrace();
             //log exception, job essentially fails
         }
 
@@ -219,6 +222,7 @@ public class PipelineStepExtractor {
             try{
                 FileUtils.writeStringToFile(new File(allAsciiPath, plugin + ".adoc"), whole9yards, StandardCharsets.UTF_8);
             } catch (Exception ex){
+                ex.printStackTrace();
                 System.out.println("Error generating plugin file for " + plugin + ".  Skip.");
                 //continue to next plugin
             }
@@ -252,6 +256,7 @@ public class PipelineStepExtractor {
             try{
                 FileUtils.writeStringToFile(new File(declPath, entry.getKey() + ".adoc"), whole9yards, StandardCharsets.UTF_8);
             } catch (Exception ex){
+                ex.printStackTrace();
                 System.out.println("Error generating directive file for " + entry.getKey() + ".  Skip.");
                 //continue to next directive
             }

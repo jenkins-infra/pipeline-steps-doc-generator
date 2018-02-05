@@ -133,8 +133,10 @@ public class ToAsciiDoc {
             mkDesc.append(generateHelp(new DescribableModel(d.clazz), 1))
                 .append("\n\n");
         } catch(Exception ex){
+            ex.printStackTrace();
             mkDesc.append("+").append(ex).append("+\n\n");
         } catch(Error err){
+            err.printStackTrace();
             mkDesc.append("+").append(err).append("+\n\n");
         }
         return mkDesc.toString();
@@ -153,8 +155,10 @@ public class ToAsciiDoc {
                 try {
                     mkDesc.append(generateHelp(new DescribableModel<>(d.clazz), 1)).append("\n\n");
                 } catch (Exception ex) {
+                    ex.printStackTrace();
                     mkDesc.append("+").append(ex).append("+\n\n");
                 } catch (Error err) {
+                    err.printStackTrace();
                     mkDesc.append("+").append(err).append("+\n\n");
                 }
                 return mkDesc.toString();
