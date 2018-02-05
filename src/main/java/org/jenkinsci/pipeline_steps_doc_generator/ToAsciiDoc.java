@@ -59,6 +59,7 @@ public class ToAsciiDoc {
             typeInfo.append(describeType(((ArrayType) type).getElementType(), headerLevel));
         } else if (type instanceof HomogeneousObjectType) {
             typeInfo.append("Nested Object\n\n");
+            // TODO may need to note a symbol if present
             typeInfo.append(generateHelp(((HomogeneousObjectType) type).getSchemaType(), nextHeaderLevel));
         } else if (type instanceof HeterogeneousObjectType) {
             typeInfo.append("Nested Choice of Objects\n");
@@ -129,10 +130,10 @@ public class ToAsciiDoc {
     /**
      * Generate documentation for a plugin step.
      */
-    public static String generateStepHelp(StepDescriptor d){
-        StringBuilder mkDesc = new StringBuilder(header(3)).append(" +").append(d.getFunctionName()).append("+: ").append(d.getDisplayName()).append("\n");
+    public static String generateStepHelp(QuasiDescriptor d){
+        StringBuilder mkDesc = new StringBuilder(header(3)).append(" +").append(d.getSymbol()).append("+: ").append(d.real.getDisplayName()).append("\n");
         try{
-            mkDesc.append(generateHelp(new DescribableModel(d.clazz), 1))
+            mkDesc.append(generateHelp(new DescribableModel(d.real.clazz), 1))
                 .append("\n\n");
         } catch(Exception ex){
             ex.printStackTrace();
@@ -149,7 +150,7 @@ public class ToAsciiDoc {
      */
     private static String generateDescribableHelp(Descriptor d) {
         if (d instanceof StepDescriptor) {
-            return generateStepHelp((StepDescriptor)d);
+            return generateStepHelp(new QuasiDescriptor(d));
         } else {
             Set<String> symbols = SymbolLookup.getSymbolValue(d);
             if (!symbols.isEmpty()) {
@@ -188,7 +189,7 @@ public class ToAsciiDoc {
      *
      * @return String  total documentation for the page
      */
-    public static String generatePluginHelp(String pluginName, String displayName, Map<String, List<StepDescriptor>> byPlugin, boolean genHeader){
+    public static String generatePluginHelp(String pluginName, String displayName, Map<String, List<QuasiDescriptor>> byPlugin, boolean genHeader){
         Main.isUnitTest = true;
 
         //TODO: if condition
@@ -200,12 +201,7 @@ public class ToAsciiDoc {
         whole9yards.append("== ").append(displayName).append("\n\n");
         whole9yards.append("plugin:").append(pluginName).append("[View this plugin on the Plugins Index]\n\n");
         for(String type : byPlugin.keySet()){
-            for(StepDescriptor sd : byPlugin.get(type)){
-                if (pluginName.equals("workflow-basic-steps") && sd.getFunctionName().equals("step")) {
-                    /* this doesn't work right */
-                    // TODO make this not super broken
-                    continue;
-                }
+            for (QuasiDescriptor sd : byPlugin.get(type)){
                 whole9yards.append(generateStepHelp(sd));
             }
         }
