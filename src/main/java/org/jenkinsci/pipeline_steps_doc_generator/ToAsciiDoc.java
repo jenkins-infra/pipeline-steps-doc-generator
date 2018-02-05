@@ -63,7 +63,9 @@ public class ToAsciiDoc {
         } else if (type instanceof HeterogeneousObjectType) {
             typeInfo.append("Nested Choice of Objects\n");
             for (Map.Entry<String, DescribableModel<?>> entry : ((HeterogeneousObjectType) type).getTypes().entrySet()) {
-                typeInfo.append("+").append(DescribableModel.CLAZZ).append(": '").append(entry.getKey()).append("'+\n");  //FIX
+                Set<String> symbols = SymbolLookup.getSymbolValue(entry.getValue().getType());
+                String symbol = symbols.isEmpty() ? DescribableModel.CLAZZ + ": '" + entry.getKey() + "'" : symbols.iterator().next();
+                typeInfo.append("+").append(symbol).append("+\n");
                 typeInfo.append(generateHelp(entry.getValue(), nextHeaderLevel));
             }
         } else if (type instanceof ErrorType) { //Shouldn't hit this; open a ticket
