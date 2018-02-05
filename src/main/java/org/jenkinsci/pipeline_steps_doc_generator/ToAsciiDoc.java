@@ -63,13 +63,15 @@ public class ToAsciiDoc {
         } else if (type instanceof HeterogeneousObjectType) {
             typeInfo
                   .append("<b>Nested Choice of Objects</b>\n");
-            for (Map.Entry<String, DescribableModel<?>> entry : ((HeterogeneousObjectType) type).getTypes().entrySet()) {
-                Set<String> symbols = SymbolLookup.getSymbolValue(entry.getValue().getType());
-                String symbol = symbols.isEmpty() ? DescribableModel.CLAZZ + ": '" + entry.getKey() + "'" : symbols.iterator().next();
-                typeInfo
-                      .append("<li><code>")
-                      .append(symbol).append("</code></li>\n")
-                      .append(generateHelp(entry.getValue(), true));
+            if (((HeterogeneousObjectType) type).getType() != Object.class) {
+                for (Map.Entry<String, DescribableModel<?>> entry : ((HeterogeneousObjectType) type).getTypes().entrySet()) {
+                    Set<String> symbols = SymbolLookup.getSymbolValue(entry.getValue().getType());
+                    String symbol = symbols.isEmpty() ? DescribableModel.CLAZZ + ": '" + entry.getKey() + "'" : symbols.iterator().next();
+                    typeInfo
+                          .append("<li><code>")
+                          .append(symbol).append("</code></li>\n")
+                          .append(generateHelp(entry.getValue(), true));
+                }
             }
         } else if (type instanceof ErrorType) { //Shouldn't hit this; open a ticket
             Exception x = ((ErrorType) type).getError();
