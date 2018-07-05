@@ -143,7 +143,7 @@ public class ToAsciiDoc {
      * Generate documentation for a plugin step.
      */
     public static String generateStepHelp(QuasiDescriptor d){
-        StringBuilder mkDesc = new StringBuilder(header(3)).append(" +").append(d.getSymbol()).append("+: ").append(d.real.getDisplayName()).append("\n");
+        StringBuilder mkDesc = new StringBuilder(header(3)).append(" `").append(d.getSymbol()).append("`: ").append(d.real.getDisplayName()).append("\n");
         mkDesc.append("++++\n");
         try{
             mkDesc.append(generateHelp(new DescribableModel(d.real.clazz), true))
@@ -167,15 +167,17 @@ public class ToAsciiDoc {
         } else {
             Set<String> symbols = SymbolLookup.getSymbolValue(d);
             if (!symbols.isEmpty()) {
-                StringBuilder mkDesc = new StringBuilder(header(3)).append(" +").append(symbols.iterator().next()).append("+: ").append(d.getDisplayName()).append("\n");
+                StringBuilder mkDesc = new StringBuilder(header(3)).append(" `").append(symbols.iterator().next()).append("`: ").append(d.getDisplayName()).append("\n");
                 try {
                     mkDesc.append(generateHelp(new DescribableModel<>(d.clazz), true)).append("\n\n");
                 } catch (Exception ex) {
                     ex.printStackTrace();
-                    mkDesc.append("+").append(ex).append("+\n\n");
+                    // backtick-plus for safety - monospace literal string
+                    mkDesc.append("`+").append(ex).append("+`\n\n");
                 } catch (Error err) {
                     err.printStackTrace();
-                    mkDesc.append("+").append(err).append("+\n\n");
+                    // backtick-plus for safety - monospace literal string
+                    mkDesc.append("`+").append(err).append("+`\n\n");
                 }
                 return mkDesc.toString();
             } else {
@@ -191,11 +193,11 @@ public class ToAsciiDoc {
         StringBuilder head = new StringBuilder("---\nlayout: pipelinesteps\ntitle: \"");
         head.append(pluginName)
           .append("\"\n---\n")
-		  .append("\n:notitle:\n:description:\n:author:\n:email: jenkinsci-users@googlegroups.com\n:sectanchors:\n:toc: left\n\n");
+		  .append("\n:notitle:\n:description:\n:author:\n:email: jenkinsci-users@googlegroups.com\n:sectanchors:\n:toc: left\n:compat-mode!:\n\n");
 
         return head.toString();
     }
-    
+
     /**
      * Generate help documentation for an entire plugin.  Returns a String that can
      * be saved into a file.
@@ -210,7 +212,7 @@ public class ToAsciiDoc {
         if(genHeader){
             whole9yards.append(generateHeader(displayName));
         }
-        
+
         whole9yards.append("== ").append(displayName).append("\n\n");
         whole9yards.append("plugin:").append(pluginName).append("[View this plugin on the Plugins Index]\n\n");
         for(String type : byPlugin.keySet()){
