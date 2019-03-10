@@ -1,76 +1,61 @@
 #!/usr/bin/env groovy
 
-properties([
-    pipelineTriggers([
-        // run every Sunday
+pipeline {
+    agent { label 'maven' }
+    triggers {
         cron('H H * * 0')
-    ])
-])
-
-node('linux') {
-    deleteDir()
-
-    List mavenEnv = [
-        "JAVA_HOME=${tool 'jdk8'}",
-        "PATH+MVN=${tool 'mvn'}/bin",
-        "PATH+JDK=${tool 'jdk8'}/bin",
-        'MAVEN_OPTS=-Dmaven.repo.local=${PWD}/.m2_repo',
-    ]
-
-    stage('Checkout') {
-        checkout scm
     }
 
-    stage('Prepare Indexer') {
-        dir('pluginFolder') {
-            timestamps {
-                git changelog: false,
-                        poll: false,
-                        url:'https://github.com/jenkinsci/backend-extension-indexer.git',
-                    branch: 'master'
+    option {
+        timestamps()
+    }
 
-                withEnv(mavenEnv) {
+    stages {
+        stage('Checkout') {
+            steps {
+                deleteDir()
+                checkout scm
+            }
+        }
+
+        stage('Prepare Indexer') {
+            steps {
+                dir('pluginFolder') {
+                    git changelog: false,
+                            poll: false,
+                            url:'https://github.com/jenkinsci/backend-extension-indexer.git',
+                        branch: 'master'
                     sh 'mvn -s ../settings.xml clean install -DskipTests'
                 }
             }
         }
-    }
 
-    stage('Run Indexer') {
-        dir('pluginFolder') {
-            timestamps {
-                withEnv(mavenEnv) {
+        stage('Run Indexer') {
+            steps {
+                dir('pluginFolder') {
                     sh 'java -verbose:gc -jar ./target/*-bin/extension-indexer*.jar -plugins ./plugins && mv plugins ..'
                 }
             }
         }
-    }
 
-    stage('Generate Documentation') {
-        dir('docFolder') {
-            checkout scm
-
-            withEnv(mavenEnv) {
-                timestamps {
+        stage('Generate Documentation') {
+            steps {
+                dir('docFolder') {
+                    checkout scm
                     sh 'mvn -s ../settings.xml clean install -DskipTests'
                     sh 'mv ../plugins . && java -verbose:gc -javaagent:./contrib/file-leak-detector.jar -jar ./target/*-bin/pipeline-steps-doc-generator*.jar'
                 }
             }
         }
-    }
 
-    stage('Clean up') {
-        timestamps {
-            dir('docFolder') {
-                zip dir: './allAscii', glob: '', zipFile: 'allAscii.zip'
-                zip dir: './declarative', glob: '', zipFile: 'declarative.zip'
-                archiveArtifacts artifacts: 'allAscii.zip,declarative.zip', fingerprint: true
+        stage('Clean up') {
+            steps {
+                dir('docFolder') {
+                    zip dir: './allAscii', glob: '', zipFile: 'allAscii.zip'
+                    zip dir: './declarative', glob: '', zipFile: 'declarative.zip'
+                    archiveArtifacts artifacts: 'allAscii.zip,declarative.zip', fingerprint: true
+                }
             }
         }
     }
-
-    /* shut. down. everything. */
-    deleteDir()
 }
-
-
