@@ -6,7 +6,7 @@ pipeline {
         cron('H H * * 0')
     }
 
-    option {
+    options {
         timestamps()
     }
 
