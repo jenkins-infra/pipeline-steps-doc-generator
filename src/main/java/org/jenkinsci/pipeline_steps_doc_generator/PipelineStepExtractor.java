@@ -139,6 +139,11 @@ public class PipelineStepExtractor {
     private Map<String, List<QuasiDescriptor>> processSteps(boolean optional, List<StepDescriptor> steps, Map<String, String> stepsToPlugin) {
         Map<String, List<QuasiDescriptor>> required = new HashMap<>();
         for (StepDescriptor d : getStepDescriptors(optional, steps)) {
+            try {
+                pluginManager.uberPlusClassLoader.findClass(d.getClass().getName());
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
             if(stepsToPlugin.get(d.getClass().getName()) != null){
                 String pluginName = stepsToPlugin.get(d.getClass().getName()).trim();
                 List<QuasiDescriptor> allSteps = required.get(pluginName);

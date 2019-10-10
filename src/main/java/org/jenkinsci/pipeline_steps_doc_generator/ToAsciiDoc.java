@@ -1,6 +1,8 @@
 package org.jenkinsci.pipeline_steps_doc_generator;
 
 import hudson.model.Descriptor;
+
+import org.apache.commons.io.IOUtils;
 import org.jenkinsci.plugins.structs.SymbolLookup;
 import org.jenkinsci.plugins.structs.describable.ArrayType;
 import org.jenkinsci.plugins.structs.describable.AtomicType;
@@ -15,7 +17,10 @@ import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Whitelist;
 import org.kohsuke.stapler.NoStaplerConstructorException;
+import org.kohsuke.stapler.lang.Klass;
 
+import java.io.IOException;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -146,16 +151,27 @@ public class ToAsciiDoc {
         StringBuilder mkDesc = new StringBuilder(header(3)).append(" `").append(d.getSymbol()).append("`: ").append(d.real.getDisplayName()).append("\n");
         mkDesc.append("++++\n");
         try{
-            mkDesc.append(generateHelp(new DescribableModel(d.real.clazz), true))
-                .append("\n\n");
-        } catch(Exception ex){
-            ex.printStackTrace();
-            mkDesc.append("<code>").append(ex).append("</code>\n\n");
-        } catch(Error err){
-            err.printStackTrace();
-            mkDesc.append("<code>").append(err).append("</code>\n\n");
+            try {
+                mkDesc.append(generateHelp(new DescribableModel(d.real.clazz), true));
+            } catch (Exception ex) {
+                mkDesc.append(getHelp("help.html", d.real.clazz));
+                System.out.println("Description of " + d.real.clazz + " restricted, encountered " + ex);
+            }
+        } catch (Exception | Error ex) {
+            mkDesc.append("<code>").append(ex).append("</code>");
+            System.out.println("Description of " + d.real.clazz + " skipped, encountered " + ex);
         }
-        return mkDesc.append("\n++++\n").toString();
+        return mkDesc.append("\n\n\n++++\n").toString();
+    }
+    
+    static String getHelp(String name, Class<?> type) throws IOException {
+        for (Klass<?> c = Klass.java(type); c != null; c = c.getSuperClass()) {
+            URL u = c.getResource(name);
+            if (u != null) {
+                return IOUtils.toString(u, "UTF-8");
+            }
+        }
+        return null;
     }
 
     /**
@@ -193,7 +209,7 @@ public class ToAsciiDoc {
         StringBuilder head = new StringBuilder("---\nlayout: pipelinesteps\ntitle: \"");
         head.append(pluginName)
           .append("\"\n---\n")
-		  .append("\n:notitle:\n:description:\n:author:\n:email: jenkinsci-users@googlegroups.com\n:sectanchors:\n:toc: left\n:compat-mode!:\n\n");
+          .append("\n:notitle:\n:description:\n:author:\n:email: jenkinsci-users@googlegroups.com\n:sectanchors:\n:toc: left\n:compat-mode!:\n\n");
 
         return head.toString();
     }
