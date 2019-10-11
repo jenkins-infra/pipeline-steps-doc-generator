@@ -8,31 +8,23 @@ import hudson.ExtensionComponent;
 import hudson.ExtensionFinder;
 import hudson.LocalPluginManager;
 import hudson.PluginManager;
-import hudson.PluginStrategy;
 import hudson.PluginWrapper;
 import hudson.Util;
-import hudson.init.InitMilestone;
 import hudson.init.InitStrategy;
+import hudson.model.Descriptor;
 import hudson.model.Hudson;
-import hudson.security.ACL;
 import hudson.util.CyclicGraphDetector;
 import jenkins.ClassLoaderReflectionToolkit;
 import jenkins.ExtensionComponentSet;
 import jenkins.ExtensionFilter;
-import jenkins.InitReactorRunner;
 import net.java.sezpoz.Index;
 import net.java.sezpoz.IndexItem;
-import org.acegisecurity.context.SecurityContextHolder;
-import org.apache.tools.ant.filters.StringInputStream;
 import org.jvnet.hudson.reactor.*;
 
 import static hudson.init.InitMilestone.*;
-import static java.util.logging.Level.WARNING;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -507,6 +499,15 @@ public class HyperLocalPluginManger extends LocalPluginManager{
             return item.annotation().optional() ? Level.FINE : Level.WARNING;
         }
     }
+
+    protected String getPluginNameForDescriptor(Descriptor<?> d) {
+        try {
+            uberPlusClassLoader.findClass(d.getClass().getName());
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    	return uberPlusClassLoader.getByPlugin().get(d.getClass().getName());
+	}
 
 }
 

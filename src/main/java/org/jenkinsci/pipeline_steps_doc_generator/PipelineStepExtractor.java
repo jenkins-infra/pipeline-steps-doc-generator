@@ -109,11 +109,10 @@ public class PipelineStepExtractor {
             InitStrategy initStrategy = new InitStrategy();
             executeReactor(initStrategy, pluginManager.diagramPlugins(initStrategy));
             List<StepDescriptor> steps = pluginManager.getPluginStrategy().findComponents(StepDescriptor.class);
-            Map<String, String> stepsToPlugin = pluginManager.uberPlusClassLoader.getByPlugin();
 
             //gather current and depricated steps
-            Map<String, List<QuasiDescriptor>> required = processSteps(false, steps, stepsToPlugin);
-            Map<String, List<QuasiDescriptor>> optional = processSteps(true, steps, stepsToPlugin);
+            Map<String, List<QuasiDescriptor>> required = processSteps(false, steps);
+            Map<String, List<QuasiDescriptor>> optional = processSteps(true, steps);
             
             for(String req : required.keySet()){
                 Map<String, List<QuasiDescriptor>> newList = new HashMap<String, List<QuasiDescriptor>>();
@@ -136,16 +135,12 @@ public class PipelineStepExtractor {
         return completeListing;
     }
 
-    private Map<String, List<QuasiDescriptor>> processSteps(boolean optional, List<StepDescriptor> steps, Map<String, String> stepsToPlugin) {
+    private Map<String, List<QuasiDescriptor>> processSteps(boolean optional, List<StepDescriptor> steps) {
         Map<String, List<QuasiDescriptor>> required = new HashMap<>();
         for (StepDescriptor d : getStepDescriptors(optional, steps)) {
-            try {
-                pluginManager.uberPlusClassLoader.findClass(d.getClass().getName());
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            }
-            if(stepsToPlugin.get(d.getClass().getName()) != null){
-                String pluginName = stepsToPlugin.get(d.getClass().getName()).trim();
+            String pluginName = pluginManager.getPluginNameForDescriptor(d);
+            if(pluginName != null){
+                pluginName = pluginName.trim();
                 List<QuasiDescriptor> allSteps = required.get(pluginName);
                 if(allSteps == null){
                     allSteps = new ArrayList<>();
@@ -163,8 +158,9 @@ public class PipelineStepExtractor {
                                     Class<?> delegateOptionType = delegateOptionSchema.getType();
                                     Descriptor<?> delegateDescriptor = Jenkins.getInstance().getDescriptor(delegateOptionType.asSubclass(Describable.class));
                                     // TODO for some reason, stepsToPlugin contains entries for descriptors but not their describables:
-                                    String nestedPluginName = stepsToPlugin.get(delegateDescriptor.getClass().getName());
+                                    String nestedPluginName = pluginManager.getPluginNameForDescriptor(delegateDescriptor);
                                     if (nestedPluginName == null) {
+                                        System.out.println("No plugin found, assuming core: " + delegateDescriptor.getClass().getName());
                                         nestedPluginName = "core";
                                     }
                                     Set<String> symbols = SymbolLookup.getSymbolValue(delegateDescriptor);
@@ -186,7 +182,7 @@ public class PipelineStepExtractor {
         return required;
     }
 
-    /**
+	/**
      * Executes a reactor.
      *
      * @param is
@@ -330,10 +326,7 @@ public class PipelineStepExtractor {
             } else {
                 pluginName = "core";
             }
-            if (!descMap.containsKey(pluginName)) {
-                descMap.put(pluginName, new ArrayList<>());
-            }
-            descMap.get(pluginName).add(d);
+            descMap.computeIfAbsent(pluginName, k -> new ArrayList<>()).add(d);
         }
         return descMap;
     }
