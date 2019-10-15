@@ -163,7 +163,14 @@ public class ToAsciiDoc {
         }
         return mkDesc.append("\n\n\n++++\n").toString();
     }
-    
+
+    /**
+     * Copy of {@link DescribableModel#getHelp()}, used in case DescribableModel can't be instantiated.
+     * @param name resource name
+     * @param type class
+     * @return file content
+     * @throws IOException if file can't be read
+     */
     static String getHelp(String name, Class<?> type) throws IOException {
         for (Klass<?> c = Klass.java(type); c != null; c = c.getSuperClass()) {
             URL u = c.getResource(name);

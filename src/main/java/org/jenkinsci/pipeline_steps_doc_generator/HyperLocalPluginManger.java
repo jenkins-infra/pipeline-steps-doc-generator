@@ -500,14 +500,25 @@ public class HyperLocalPluginManger extends LocalPluginManager{
         }
     }
 
+    /**
+     * @param d descriptor
+     * @return name of the plugin this class belongs to, or "core" if not found
+     */
     protected String getPluginNameForDescriptor(Descriptor<?> d) {
+        String className = d.getClass().getName();
+        // try one last time to find out which plugin this belongs to (needed for WEBSITE-434)
         try {
-            uberPlusClassLoader.findClass(d.getClass().getName());
+            uberPlusClassLoader.findClass(className);
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
-    	return uberPlusClassLoader.getByPlugin().get(d.getClass().getName());
-	}
+    	String pluginName = uberPlusClassLoader.getByPlugin().get(className);
+        if (pluginName == null) {
+        	System.out.println("No plugin found, assuming core: " + className);
+            return "core";
+        }
+        return pluginName.trim();
+    }
 
 }
 
