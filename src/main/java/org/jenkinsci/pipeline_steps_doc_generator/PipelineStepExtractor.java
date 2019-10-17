@@ -109,11 +109,10 @@ public class PipelineStepExtractor {
             InitStrategy initStrategy = new InitStrategy();
             executeReactor(initStrategy, pluginManager.diagramPlugins(initStrategy));
             List<StepDescriptor> steps = pluginManager.getPluginStrategy().findComponents(StepDescriptor.class);
-            Map<String, String> stepsToPlugin = pluginManager.uberPlusClassLoader.getByPlugin();
 
             //gather current and depricated steps
-            Map<String, List<QuasiDescriptor>> required = processSteps(false, steps, stepsToPlugin);
-            Map<String, List<QuasiDescriptor>> optional = processSteps(true, steps, stepsToPlugin);
+            Map<String, List<QuasiDescriptor>> required = processSteps(false, steps);
+            Map<String, List<QuasiDescriptor>> optional = processSteps(true, steps);
             
             for(String req : required.keySet()){
                 Map<String, List<QuasiDescriptor>> newList = new HashMap<String, List<QuasiDescriptor>>();
@@ -136,46 +135,32 @@ public class PipelineStepExtractor {
         return completeListing;
     }
 
-    private Map<String, List<QuasiDescriptor>> processSteps(boolean optional, List<StepDescriptor> steps, Map<String, String> stepsToPlugin) {
+    private Map<String, List<QuasiDescriptor>> processSteps(boolean optional, List<StepDescriptor> steps) {
         Map<String, List<QuasiDescriptor>> required = new HashMap<>();
         for (StepDescriptor d : getStepDescriptors(optional, steps)) {
-            if(stepsToPlugin.get(d.getClass().getName()) != null){
-                String pluginName = stepsToPlugin.get(d.getClass().getName()).trim();
-                List<QuasiDescriptor> allSteps = required.get(pluginName);
-                if(allSteps == null){
-                    allSteps = new ArrayList<>();
-                    required.put(pluginName, allSteps);
-                }
-                allSteps.add(new QuasiDescriptor(d));
-                if (d.isMetaStep()) {
-                    DescribableModel<?> m = DescribableModel.of(d.clazz);
-                    Collection<DescribableParameter> parameters = m.getParameters();
-                    if (parameters.size() == 1) {
-                        DescribableParameter delegate = parameters.iterator().next();
-                        if (delegate.isRequired()) {
-                            if (delegate.getType() instanceof HeterogeneousObjectType) {
-                                for (DescribableModel<?> delegateOptionSchema : ((HeterogeneousObjectType) delegate.getType()).getTypes().values()) {
-                                    Class<?> delegateOptionType = delegateOptionSchema.getType();
-                                    Descriptor<?> delegateDescriptor = Jenkins.getInstance().getDescriptor(delegateOptionType.asSubclass(Describable.class));
-                                    // TODO for some reason, stepsToPlugin contains entries for descriptors but not their describables:
-                                    String nestedPluginName = stepsToPlugin.get(delegateDescriptor.getClass().getName());
-                                    if (nestedPluginName == null) {
-                                        nestedPluginName = "core";
-                                    }
-                                    Set<String> symbols = SymbolLookup.getSymbolValue(delegateDescriptor);
-                                    if (!symbols.isEmpty()) {
-                                        List<QuasiDescriptor> nestedSteps = required.get(nestedPluginName);
-                                        if (nestedSteps == null) {
-                                            nestedSteps = new ArrayList<>();
-                                            required.put(nestedPluginName, nestedSteps);
-                                        }
-                                        nestedSteps.add(new QuasiDescriptor(delegateDescriptor));
-                                    }
+            String pluginName = pluginManager.getPluginNameForDescriptor(d);
+            required.computeIfAbsent(pluginName, k -> new ArrayList<>())
+                .add(new QuasiDescriptor(d));
+            if (d.isMetaStep()) {
+                DescribableModel<?> m = DescribableModel.of(d.clazz);
+                Collection<DescribableParameter> parameters = m.getParameters();
+                if (parameters.size() == 1) {
+                    DescribableParameter delegate = parameters.iterator().next();
+                    if (delegate.isRequired()) {
+                        if (delegate.getType() instanceof HeterogeneousObjectType) {
+                            for (DescribableModel<?> delegateOptionSchema : ((HeterogeneousObjectType) delegate.getType()).getTypes().values()) {
+                                Class<?> delegateOptionType = delegateOptionSchema.getType();
+                                Descriptor<?> delegateDescriptor = Jenkins.getInstance().getDescriptor(delegateOptionType.asSubclass(Describable.class));
+                                String nestedPluginName = pluginManager.getPluginNameForDescriptor(delegateDescriptor);
+                                Set<String> symbols = SymbolLookup.getSymbolValue(delegateDescriptor);
+                                if (!symbols.isEmpty()) {
+                                    required.computeIfAbsent(nestedPluginName, k -> new ArrayList<>())
+                                        .add(new QuasiDescriptor(delegateDescriptor));
                                 }
                             }
                         }
-                    } // TODO currently not handling metasteps with other parameters, either required or (like GenericSCMStep) not
-                }
+                    }
+                } // TODO currently not handling metasteps with other parameters, either required or (like GenericSCMStep) not
             }
         }
         return required;
@@ -325,10 +310,7 @@ public class PipelineStepExtractor {
             } else {
                 pluginName = "core";
             }
-            if (!descMap.containsKey(pluginName)) {
-                descMap.put(pluginName, new ArrayList<>());
-            }
-            descMap.get(pluginName).add(d);
+            descMap.computeIfAbsent(pluginName, k -> new ArrayList<>()).add(d);
         }
         return descMap;
     }
