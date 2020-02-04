@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
 import java.util.stream.Collectors;
@@ -36,7 +37,7 @@ public class ToAsciiDoc {
     /**
      * Keeps track of nested {@link DescribableModel#getType()} to avoid recursion.
      */
-    private static Stack<Class> nesting = new Stack<>();
+    private static Stack<Class<?>> nesting = new Stack<>();
 
     /** Asciidoc conversion functions. **/
     private static String header(int depth){
@@ -74,8 +75,8 @@ public class ToAsciiDoc {
                     String symbol = symbols.isEmpty() ? DescribableModel.CLAZZ + ": '" + entry.getKey() + "'" : symbols.iterator().next();
                     typeInfo
                           .append("<li><code>")
-                          .append(symbol).append("</code></li>\n")
-                          .append(generateHelp(entry.getValue(), true));
+                          .append(symbol).append("</code><div>\n")
+                          .append(generateHelp(entry.getValue(), true)).append("</div></li>\n");
                 }
             }
         } else if (type instanceof ErrorType) { //Shouldn't hit this; open a ticket
@@ -140,22 +141,26 @@ public class ToAsciiDoc {
             }
         } finally {
             nesting.pop();
-            return total.toString();
         }
+        return total.toString();
     }
 
     /**
      * Generate documentation for a plugin step.
+     * For delegate steps adds example without Symbol.
      */
     public static String generateStepHelp(QuasiDescriptor d){
         StringBuilder mkDesc = new StringBuilder(header(3)).append(" `").append(d.getSymbol()).append("`: ").append(d.real.getDisplayName()).append("\n");
         mkDesc.append("++++\n");
-        try{
-            try {
-                mkDesc.append(generateHelp(new DescribableModel(d.real.clazz), true));
-            } catch (Exception ex) {
+        try {
+            Optional<Descriptor<?>> delegateExample = PipelineStepExtractor.getMetaDelegates(d.real)
+                .filter(sub -> SymbolLookup.getSymbolValue(sub.clazz).isEmpty()).findFirst();
+            if (delegateExample.isPresent()) {
                 mkDesc.append(getHelp("help.html", d.real.clazz));
-                System.out.println("Description of " + d.real.clazz + " restricted, encountered " + ex);
+                String symbol = new QuasiDescriptor(delegateExample.get(), (StepDescriptor) d.real).getSymbol();
+                mkDesc.append(String.format("To use this step you need to specify a delegate class, e.g <code>%s</code>.", symbol));
+            } else {
+                appendSimpleStepDescription(mkDesc, d.real.clazz);
             }
         } catch (Exception | Error ex) {
             mkDesc.append("<code>").append(ex).append("</code>");
@@ -164,7 +169,16 @@ public class ToAsciiDoc {
         return mkDesc.append("\n\n\n++++\n").toString();
     }
 
-    /**
+	private static void appendSimpleStepDescription(StringBuilder mkDesc, Class<?> clazz) throws IOException {
+        try {
+            mkDesc.append(generateHelp(new DescribableModel<>(clazz), true));
+        } catch (Exception ex) {
+            mkDesc.append(getHelp("help.html", clazz));
+            System.out.println("Description of " + clazz + " restricted, encountered " + ex);
+        }
+	}
+
+	/**
      * Copy of {@link DescribableModel#getHelp()}, used in case DescribableModel can't be instantiated.
      * @param name resource name
      * @param type class
@@ -184,9 +198,9 @@ public class ToAsciiDoc {
     /**
      * Generate documentation for a {@link Descriptor}
      */
-    private static String generateDescribableHelp(Descriptor d) {
+    private static String generateDescribableHelp(Descriptor<?> d) {
         if (d instanceof StepDescriptor) {
-            return generateStepHelp(new QuasiDescriptor(d));
+            return generateStepHelp(new QuasiDescriptor(d, null));
         } else {
             Set<String> symbols = SymbolLookup.getSymbolValue(d);
             if (!symbols.isEmpty()) {
@@ -237,7 +251,9 @@ public class ToAsciiDoc {
         }
 
         whole9yards.append("== ").append(displayName).append("\n\n");
-        whole9yards.append("plugin:").append(pluginName).append("[View this plugin on the Plugins Index]\n\n");
+        if (!"core".equals(pluginName)) {
+            whole9yards.append("plugin:").append(pluginName).append("[View this plugin on the Plugins site]\n\n");
+        }
         for(String type : byPlugin.keySet()){
             for (QuasiDescriptor sd : byPlugin.get(type)){
                 whole9yards.append(generateStepHelp(sd));
@@ -261,7 +277,7 @@ public class ToAsciiDoc {
                 } else {
                     whole9yards.append("plugin:").append(pluginName).append("[View this plugin on the Plugins Index]\n\n");
                 }
-                for (Descriptor d : entry.getValue()) {
+                for (Descriptor<?> d : entry.getValue()) {
                     whole9yards.append(generateDescribableHelp(d));
                 }
             }

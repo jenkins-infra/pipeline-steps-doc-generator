@@ -12,9 +12,11 @@ import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 public class QuasiDescriptor {
 
     public final Descriptor<?> real;
+    private StepDescriptor parent;
 
-    public QuasiDescriptor(Descriptor<?> d) {
+    public QuasiDescriptor(Descriptor<?> d, StepDescriptor parent) {
         real = d;
+        this.parent = parent;
     }
 
     public String getSymbol() {
@@ -24,6 +26,8 @@ public class QuasiDescriptor {
             Set<String> symbolValues = SymbolLookup.getSymbolValue(real);
             if (!symbolValues.isEmpty()) {
                 return symbolValues.iterator().next();
+            } else if(parent != null) {
+                return String.format("%s([$class: '%s'])", parent.getFunctionName(), real.clazz.getSimpleName());
             } else {
                 throw new AssertionError("Symbol present but no values defined.");
             }

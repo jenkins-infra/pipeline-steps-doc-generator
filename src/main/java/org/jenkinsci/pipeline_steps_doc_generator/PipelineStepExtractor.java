@@ -46,7 +46,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.mockito.Mockito.*;
 
@@ -115,7 +115,7 @@ public class PipelineStepExtractor {
             Map<String, List<QuasiDescriptor>> optional = processSteps(true, steps);
             
             for(String req : required.keySet()){
-                Map<String, List<QuasiDescriptor>> newList = new HashMap<String, List<QuasiDescriptor>>();
+                Map<String, List<QuasiDescriptor>> newList = new HashMap<>();
                 newList.put("Steps", required.get(req));
                 completeListing.put(req, newList);
             }
@@ -140,30 +140,36 @@ public class PipelineStepExtractor {
         for (StepDescriptor d : getStepDescriptors(optional, steps)) {
             String pluginName = pluginManager.getPluginNameForDescriptor(d);
             required.computeIfAbsent(pluginName, k -> new ArrayList<>())
-                .add(new QuasiDescriptor(d));
-            if (d.isMetaStep()) {
-                DescribableModel<?> m = DescribableModel.of(d.clazz);
-                Collection<DescribableParameter> parameters = m.getParameters();
-                if (parameters.size() == 1) {
-                    DescribableParameter delegate = parameters.iterator().next();
-                    if (delegate.isRequired()) {
-                        if (delegate.getType() instanceof HeterogeneousObjectType) {
-                            for (DescribableModel<?> delegateOptionSchema : ((HeterogeneousObjectType) delegate.getType()).getTypes().values()) {
-                                Class<?> delegateOptionType = delegateOptionSchema.getType();
-                                Descriptor<?> delegateDescriptor = Jenkins.getInstance().getDescriptor(delegateOptionType.asSubclass(Describable.class));
-                                String nestedPluginName = pluginManager.getPluginNameForDescriptor(delegateDescriptor);
-                                Set<String> symbols = SymbolLookup.getSymbolValue(delegateDescriptor);
-                                if (!symbols.isEmpty()) {
-                                    required.computeIfAbsent(nestedPluginName, k -> new ArrayList<>())
-                                        .add(new QuasiDescriptor(delegateDescriptor));
-                                }
-                            }
-                        }
-                    }
-                } // TODO currently not handling metasteps with other parameters, either required or (like GenericSCMStep) not
-            }
+                .add(new QuasiDescriptor(d, null));
+            getMetaDelegates(d).forEach(delegateDescriptor -> {
+                 String nestedPluginName = pluginManager.getPluginNameForDescriptor(delegateDescriptor);
+                 required.computeIfAbsent(nestedPluginName, k -> new ArrayList<>())
+                         .add(new QuasiDescriptor(delegateDescriptor, d));
+            }); // TODO currently not handling metasteps with other parameters, either required or (like GenericSCMStep) not
         }
         return required;
+    }
+
+    protected static Stream<Descriptor<?>> getMetaDelegates(Descriptor<?> d) {
+        if (d instanceof StepDescriptor && ((StepDescriptor) d).isMetaStep()) {
+            DescribableModel<?> m = DescribableModel.of(d.clazz);
+            Collection<DescribableParameter> parameters = m.getParameters();
+            if (parameters.size() == 1) {
+                DescribableParameter delegate = parameters.iterator().next();
+                if (delegate.isRequired()) {
+                    if (delegate.getType() instanceof HeterogeneousObjectType) {
+                        return ((HeterogeneousObjectType) delegate.getType()).getTypes()
+                                .values().stream().map(PipelineStepExtractor::getDescriptor);
+                    }
+                }
+            }
+        }
+        return Stream.empty();
+    }
+
+    private static Descriptor<?> getDescriptor(DescribableModel<?> delegateOptionSchema) {
+        Class<?> delegateOptionType = delegateOptionSchema.getType();
+        return Jenkins.getInstance().getDescriptor(delegateOptionType.asSubclass(Describable.class));
     }
 
     /**
@@ -189,7 +195,6 @@ public class PipelineStepExtractor {
                 if (taskName !=null)
                     t.setName(taskName);
                 try {
-                    long start = System.currentTimeMillis();
                     super.runTask(task);
                 } finally {
                     t.setName(name);
@@ -207,7 +212,7 @@ public class PipelineStepExtractor {
     }
 
     public Collection<? extends StepDescriptor> getStepDescriptors(boolean advanced, List<StepDescriptor> all) {
-        TreeSet<StepDescriptor> t = new TreeSet<StepDescriptor>(new StepDescriptorComparator());
+        TreeSet<StepDescriptor> t = new TreeSet<>(new StepDescriptorComparator());
         for (StepDescriptor d : all) {
             if (d.isAdvanced() == advanced) {
                 t.add(d);
@@ -226,7 +231,7 @@ public class PipelineStepExtractor {
 
     public void generateAscii(Map<String, Map<String, List<QuasiDescriptor>>> allSteps, PluginManager pluginManager){
         File allAscii;
-        if(asciiDest != null){
+        if (asciiDest != null) {
             allAscii = new File(asciiDest);
         } else {
             allAscii = new File("allAscii");
@@ -237,9 +242,10 @@ public class PipelineStepExtractor {
             System.out.println("processing " + plugin);
             Map<String, List<QuasiDescriptor>> byPlugin = allSteps.get(plugin);
             PluginWrapper thePlugin = pluginManager.getPlugin(plugin);
-            String whole9yards = ToAsciiDoc.generatePluginHelp(plugin, thePlugin == null ? "Core" : thePlugin.getDisplayName(), byPlugin, true);
-            
-            try{
+            String displayName = thePlugin == null ? "Jenkins Core" : thePlugin.getDisplayName();
+            String whole9yards = ToAsciiDoc.generatePluginHelp(plugin, displayName, byPlugin, true);
+
+            try {
                 FileUtils.writeStringToFile(new File(allAsciiPath, plugin + ".adoc"), whole9yards, StandardCharsets.UTF_8);
             } catch (Exception ex){
                 ex.printStackTrace();
@@ -303,7 +309,7 @@ public class PipelineStepExtractor {
             }
         });
 
-        for (Descriptor d : descriptors.stream().filter(fullFilter).collect(Collectors.toList())) {
+        descriptors.stream().filter(fullFilter).forEach(d -> {
             String pluginName = descriptorsToPlugin.get(d.getClass().getName());
             if (pluginName != null) {
                 pluginName = pluginName.trim();
@@ -311,7 +317,7 @@ public class PipelineStepExtractor {
                 pluginName = "core";
             }
             descMap.computeIfAbsent(pluginName, k -> new ArrayList<>()).add(d);
-        }
+        });
         return descMap;
     }
 
