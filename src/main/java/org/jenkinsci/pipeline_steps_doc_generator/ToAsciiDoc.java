@@ -28,12 +28,15 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 //fake out unit tests
 import hudson.Main;
 
 public class ToAsciiDoc {
+    private static final Logger LOG = Logger.getLogger(ToAsciiDoc.class.getName());
     /**
      * Keeps track of nested {@link DescribableModel#getType()} to avoid recursion.
      */
@@ -81,6 +84,7 @@ public class ToAsciiDoc {
             }
         } else if (type instanceof ErrorType) { //Shouldn't hit this; open a ticket
             Exception x = ((ErrorType) type).getError();
+            LOG.log(Level.FINE, "Encountered ErrorType object with exception:" + x);
             if(x instanceof NoStaplerConstructorException || x instanceof UnsupportedOperationException) {
                 String msg = x.toString();
                 typeInfo.append("<code>").append(msg.substring(msg.lastIndexOf(" ")).trim()).append("</code>\n");
@@ -164,7 +168,7 @@ public class ToAsciiDoc {
             }
         } catch (Exception | Error ex) {
             mkDesc.append("<code>").append(ex).append("</code>");
-            System.out.println("Description of " + d.real.clazz + " skipped, encountered " + ex);
+            LOG.log(Level.SEVERE, "Description of " + d.real.clazz + " skipped, encountered ", ex);
         }
         return mkDesc.append("\n\n\n++++\n").toString();
     }
@@ -174,7 +178,7 @@ public class ToAsciiDoc {
             mkDesc.append(generateHelp(new DescribableModel<>(clazz), true));
         } catch (Exception ex) {
             mkDesc.append(getHelp("help.html", clazz));
-            System.out.println("Description of " + clazz + " restricted, encountered " + ex);
+            LOG.log(Level.WARNING, "Description of " + clazz + " restricted, encountered ", ex);
         }
 	}
 
@@ -207,14 +211,10 @@ public class ToAsciiDoc {
                 StringBuilder mkDesc = new StringBuilder(header(3)).append(" `").append(symbols.iterator().next()).append("`: ").append(d.getDisplayName()).append("\n");
                 try {
                     mkDesc.append(generateHelp(new DescribableModel<>(d.clazz), true)).append("\n\n");
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+                } catch (Exception | Error ex) {
+                    LOG.log(Level.SEVERE, "Problem generating help for descriptor", ex);
                     // backtick-plus for safety - monospace literal string
                     mkDesc.append("`+").append(ex).append("+`\n\n");
-                } catch (Error err) {
-                    err.printStackTrace();
-                    // backtick-plus for safety - monospace literal string
-                    mkDesc.append("`+").append(err).append("+`\n\n");
                 }
                 return mkDesc.toString();
             } else {

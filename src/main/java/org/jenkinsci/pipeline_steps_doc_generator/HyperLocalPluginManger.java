@@ -34,6 +34,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Acts as a PluginManager that operates outside the normal startup process of Jenkins.  Essentially, this captures the
@@ -44,6 +45,7 @@ import java.util.logging.Level;
  * use calls to Jenkins.
  */
 public class HyperLocalPluginManger extends LocalPluginManager{
+    private static final Logger LOG = Logger.getLogger(HyperLocalPluginManger.class.getName());
     private final ModClassicPluginStrategy strategy;
     public final UberPlusClassLoader uberPlusClassLoader = new UberPlusClassLoader();
     private final boolean checkCycles;
@@ -126,7 +128,7 @@ public class HyperLocalPluginManger extends LocalPluginManager{
                                 private boolean isDuplicate(PluginWrapper p) {
                                     String shortName = p.getShortName();
                                     if (inspectedShortNames.containsKey(shortName)) {
-                                        System.out.println("Ignoring "+arc+" because "+inspectedShortNames.get(shortName)+" is already loaded");
+                                        LOG.info("Ignoring "+arc+" because "+inspectedShortNames.get(shortName)+" is already loaded");
                                         return true;
                                     }
 
@@ -164,7 +166,7 @@ public class HyperLocalPluginManger extends LocalPluginManager{
                                             protected void reactOnCycle(PluginWrapper q, List<PluginWrapper> cycle)
                                                     throws hudson.util.CyclicGraphDetector.CycleDetectedException {
 
-                                                System.out.println("FATAL: found cycle in plugin dependencies: (root="+q+", deactivating all involved) "+Util.join(cycle," -> "));
+                                                LOG.severe("FATAL: found cycle in plugin dependencies: (root="+q+", deactivating all involved) "+Util.join(cycle," -> "));
                                                 for (PluginWrapper pluginWrapper : cycle) {
                                                     pluginWrapper.setHasCycleDependency(true);
                                                     failedPlugins.add(new FailedPlugin(pluginWrapper.getShortName(), new CycleDetectedException(cycle)));
@@ -465,7 +467,7 @@ public class HyperLocalPluginManger extends LocalPluginManager{
                 } catch (LinkageError|Exception e) {
                     // sometimes the instantiation fails in an indirect classloading failure,
                     // which results in a LinkageError
-                    System.out.println("Failed to load "+item.className() + "\n" +  e);
+                    LOG.fine("Failed to load "+item.className() + "\n" +  e);
                 }
             }
 
@@ -490,13 +492,9 @@ public class HyperLocalPluginManger extends LocalPluginManager{
                     // according to JDK-4993813 this is the only way to force class initialization
                     Class.forName(extType.getName(),true,extType.getClassLoader());
                 } catch (Exception | LinkageError e) {
-                    System.out.println("Failed to scout " + item.className() + "\n" + e);
+                    LOG.fine("Failed to scout " + item.className() + "\n" + e);
                 }
             }
-        }
-
-        private Level logLevel(IndexItem<Extension, Object> item) {
-            return item.annotation().optional() ? Level.FINE : Level.WARNING;
         }
     }
 
@@ -510,11 +508,11 @@ public class HyperLocalPluginManger extends LocalPluginManager{
         try {
             uberPlusClassLoader.findClass(className);
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            LOG.log(Level.WARNING, "Class not found", e);
         }
     	String pluginName = uberPlusClassLoader.getByPlugin().get(className);
         if (pluginName == null) {
-        	System.out.println("No plugin found, assuming core: " + className);
+            LOG.info("No plugin found, assuming core: " + className);
             return "core";
         }
         return pluginName.trim();

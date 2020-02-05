@@ -32,9 +32,13 @@ import org.kohsuke.args4j.Option;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
+
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,6 +50,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Predicate;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 import java.util.stream.Stream;
 
 import static org.mockito.Mockito.*;
@@ -54,6 +63,10 @@ import static org.mockito.Mockito.*;
  * Process and find all the Pipeline steps definied in Jenkins plugins.
  */
 public class PipelineStepExtractor {
+    private static final Logger LOG = Logger.getLogger(PipelineStepExtractor.class.getName());
+    static {
+        System.setProperty("java.util.logging.SimpleFormatter.format","[%4$-7s] %5$s %6$s%n");
+    }
     @Option(name="-homeDir",usage="Root directory of the plugin folder.  This serves as the root directory of the PluginManager.")
     public String homeDir = null;
     
@@ -69,18 +82,16 @@ public class PipelineStepExtractor {
             CmdLineParser p = new CmdLineParser(pse);
             p.parseArgument(args);
         } catch(Exception ex){
-            ex.printStackTrace();
-            System.out.println("There was an error with parsing the commands, defaulting to the home directory.");
+            LOG.log(Level.SEVERE, "There was an error with parsing the commands, defaulting to the home directory.", ex);
         }
         try{
             Map<String, Map<String, List<QuasiDescriptor>>> steps = pse.findSteps();
             pse.generateAscii(steps, pse.pluginManager);
             pse.generateDeclarativeAscii();
         } catch(Exception ex){
-            ex.printStackTrace();
-            System.out.println("Error in finding all the steps");
+            LOG.log(Level.SEVERE, "Error in finding all the steps", ex);
         }
-        System.out.println("CONVERSION COMPLETE!");
+        LOG.info("CONVERSION COMPLETE!");
         System.exit(0); //otherwise environment hangs around
     }
 
@@ -128,8 +139,7 @@ public class PipelineStepExtractor {
                 completeListing.put(opt, exists);
             }
         } catch (Exception ex){
-            ex.printStackTrace();
-            //log exception, job essentially fails
+            LOG.log(Level.SEVERE, "Step generation failed", ex);
         }
 
         return completeListing;
@@ -206,7 +216,7 @@ public class PipelineStepExtractor {
         new InitReactorRunner() {
             @Override
             protected void onInitMilestoneAttained(InitMilestone milestone) {
-                System.out.println("init milestone attained " + milestone);
+                LOG.info("init milestone attained " + milestone);
             }
         }.run(reactor);
     }
@@ -239,7 +249,7 @@ public class PipelineStepExtractor {
         allAscii.mkdirs();
         String allAsciiPath = allAscii.getAbsolutePath();
         for(String plugin : allSteps.keySet()){
-            System.out.println("processing " + plugin);
+            LOG.info("processing " + plugin);
             Map<String, List<QuasiDescriptor>> byPlugin = allSteps.get(plugin);
             PluginWrapper thePlugin = pluginManager.getPlugin(plugin);
             String displayName = thePlugin == null ? "Jenkins Core" : thePlugin.getDisplayName();
@@ -248,8 +258,7 @@ public class PipelineStepExtractor {
             try {
                 FileUtils.writeStringToFile(new File(allAsciiPath, plugin + ".adoc"), whole9yards, StandardCharsets.UTF_8);
             } catch (Exception ex){
-                ex.printStackTrace();
-                System.out.println("Error generating plugin file for " + plugin + ".  Skip.");
+                LOG.log(Level.SEVERE, "Error generating plugin file for " + plugin + ".  Skip.", ex);
                 //continue to next plugin
             }
         }
@@ -268,12 +277,12 @@ public class PipelineStepExtractor {
         Map<Class<? extends Descriptor>, Predicate<Descriptor>> filters = getDeclarativeFilters();
 
         for (Map.Entry<String,List<Class<? extends Descriptor>>> entry : getDeclarativeDirectives().entrySet()) {
-            System.out.println("Generating docs for directive " + entry.getKey());
+            LOG.info("Generating docs for directive " + entry.getKey());
             Map<String, List<Descriptor>> pluginDescMap = new HashMap<>();
 
             for (Class<? extends Descriptor> d : entry.getValue()) {
                 Predicate<Descriptor> filter = filters.get(d);
-                System.out.println(" - Loading descriptors of type " + d.getSimpleName() + " with filter: " + (filter != null));
+                LOG.info(" - Loading descriptors of type " + d.getSimpleName() + " with filter: " + (filter != null));
                 pluginDescMap = processDescriptors(d, pluginDescMap, filter);
             }
 
@@ -281,9 +290,8 @@ public class PipelineStepExtractor {
 
             try{
                 FileUtils.writeStringToFile(new File(declPath, entry.getKey() + ".adoc"), whole9yards, StandardCharsets.UTF_8);
-            } catch (Exception ex){
-                ex.printStackTrace();
-                System.out.println("Error generating directive file for " + entry.getKey() + ".  Skip.");
+            } catch (Exception ex) {
+                LOG.log(Level.SEVERE, "Error generating directive file for " + entry.getKey() + ".  Skip.", ex);
                 //continue to next directive
             }
         }
