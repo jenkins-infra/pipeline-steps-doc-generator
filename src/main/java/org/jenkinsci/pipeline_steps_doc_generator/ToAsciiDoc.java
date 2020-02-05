@@ -103,8 +103,13 @@ public class ToAsciiDoc {
         if (help != null && !help.equals("")) {
             attrHelp.append(helpify(help)).append("\n");
         }
-        ParameterType type = param.getType();
-        attrHelp.append("<ul>").append(describeType(type)).append("</ul>");
+        try {
+            String typeDesc = describeType(param.getType());
+            attrHelp.append("<ul>").append(typeDesc).append("</ul>");
+        } catch (RuntimeException | Error ex) {
+            LOG.log(Level.WARNING, "Restricted description of attribute "
+                + param.getName(), ex);
+        }
         return attrHelp.toString();
     }
 
