@@ -207,7 +207,7 @@ public class HyperLocalPluginManger extends LocalPluginManager{
          * Make generated types visible.
          * Keyed by the generated class name.
          */
-        private ConcurrentMap<String, WeakReference<Class>> generatedClasses = new ConcurrentHashMap<String, WeakReference<Class>>();
+        private ConcurrentMap<String, WeakReference<Class<?>>> generatedClasses = new ConcurrentHashMap<String, WeakReference<Class<?>>>();
         /** Cache of loaded, or known to be unloadable, classes. */
         private final Map<String,Class<?>> loaded = new HashMap<String,Class<?>>();
         private final Map<String, String> byPlugin = new HashMap<String, String>();
@@ -216,16 +216,16 @@ public class HyperLocalPluginManger extends LocalPluginManager{
             super(PluginManager.class.getClassLoader());
         }
 
-        public void addNamedClass(String className, Class c) {
-            generatedClasses.put(className,new WeakReference<Class>(c));
+        public void addNamedClass(String className, Class<?> c) {
+            generatedClasses.put(className,new WeakReference<Class<?>>(c));
         }
 
         @Override
         protected Class<?> findClass(String name) throws ClassNotFoundException {
             //likely want to avoid this, but we'll deal with it right now.
-            WeakReference<Class> wc = generatedClasses.get(name);
+            WeakReference<Class<?>> wc = generatedClasses.get(name);
             if (wc!=null) {
-                Class c = wc.get();
+                Class<?> c = wc.get();
                 if (c!=null)    return c;
                 else            generatedClasses.remove(name,wc);
             }
@@ -272,7 +272,7 @@ public class HyperLocalPluginManger extends LocalPluginManager{
             } else {
                 for (PluginWrapper p : activePlugins) {
                     try {
-                        Class c = p.classLoader.loadClass(name);
+                        Class<?> c = p.classLoader.loadClass(name);
                         synchronized (byPlugin){
                             byPlugin.put(c.getName(), p.getShortName());
                         }
@@ -449,7 +449,7 @@ public class HyperLocalPluginManger extends LocalPluginManager{
                     AnnotatedElement e = item.element();
                     Class<?> extType;
                     if (e instanceof Class) {
-                        extType = (Class) e;
+                        extType = (Class<?>) e;
                     } else
                     if (e instanceof Field) {
                         extType = ((Field)e).getType();
@@ -474,13 +474,13 @@ public class HyperLocalPluginManger extends LocalPluginManager{
             return result;
         }
 
-        public void scout(Class extensionType, ClassLoader cl) {
+        public void scout(Class<?> extensionType, ClassLoader cl) {
             for (IndexItem<Extension,Object> item : getIndices(cl)) {
                 try {
                     AnnotatedElement e = item.element();
                     Class<?> extType;
                     if (e instanceof Class) {
-                        extType = (Class) e;
+                        extType = (Class<?>) e;
                     } else
                     if (e instanceof Field) {
                         extType = ((Field)e).getType();
