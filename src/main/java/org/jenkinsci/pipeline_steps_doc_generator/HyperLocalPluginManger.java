@@ -460,7 +460,7 @@ public class HyperLocalPluginManger extends LocalPluginManager{
                         throw new AssertionError();
 
                     if(type.isAssignableFrom(extType)) {
-                        Object instance = item.instance();
+                        Object instance = safeInstance(item);
                         if(instance!=null)
                             result.add(new ExtensionComponent<>(type.cast(instance),item.annotation()));
                     }
@@ -472,6 +472,15 @@ public class HyperLocalPluginManger extends LocalPluginManager{
             }
 
             return result;
+        }
+
+        private Object safeInstance(IndexItem<Extension, Object> item) {
+            try {
+                return item.instance();
+            } catch (Exception | Error e) {
+                LOG.log(Level.WARNING, "Cannot instantiate " + item.className(), e);
+            }
+            return null;
         }
 
         public void scout(Class<?> extensionType, ClassLoader cl) {

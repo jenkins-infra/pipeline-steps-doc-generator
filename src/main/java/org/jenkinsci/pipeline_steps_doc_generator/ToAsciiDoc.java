@@ -159,8 +159,8 @@ public class ToAsciiDoc {
      * For delegate steps adds example without Symbol.
      */
     public static String generateStepHelp(QuasiDescriptor d){
-        StringBuilder mkDesc = new StringBuilder(header(3)).append(" `").append(d.getSymbol()).append("`: ").append(d.real.getDisplayName()).append("\n");
-        mkDesc.append("++++\n");
+        StringBuilder mkDesc = new StringBuilder(header(3)).append(" `").append(d.getSymbol()).append("`: ");
+        mkDesc.append(getDisplayName(d.real)).append("\n++++\n");
         try {
             Optional<Descriptor<?>> delegateExample = PipelineStepExtractor.getMetaDelegates(d.real)
                 .filter(sub -> SymbolLookup.getSymbolValue(sub.clazz).isEmpty()).findFirst();
@@ -178,7 +178,16 @@ public class ToAsciiDoc {
         return mkDesc.append("\n\n\n++++\n").toString();
     }
 
-	private static void appendSimpleStepDescription(StringBuilder mkDesc, Class<?> clazz) throws IOException {
+    private static String getDisplayName(Descriptor<?> d) {
+        try {
+            return d.getDisplayName();
+        } catch(Exception | Error e){
+            LOG.log(Level.WARNING, "Cannot get display name of " + d.clazz, e);
+        }
+        return "(no description)";
+    }
+
+    private static void appendSimpleStepDescription(StringBuilder mkDesc, Class<?> clazz) throws IOException {
         try {
             mkDesc.append(generateHelp(new DescribableModel<>(clazz), true));
         } catch (Exception ex) {
@@ -213,7 +222,8 @@ public class ToAsciiDoc {
         } else {
             Set<String> symbols = SymbolLookup.getSymbolValue(d);
             if (!symbols.isEmpty()) {
-                StringBuilder mkDesc = new StringBuilder(header(3)).append(" `").append(symbols.iterator().next()).append("`: ").append(d.getDisplayName()).append("\n");
+                StringBuilder mkDesc = new StringBuilder(header(3)).append(" `").append(symbols.iterator().next()).append("`: ");
+                mkDesc.append(getDisplayName(d)).append("\n");
                 try {
                     mkDesc.append(generateHelp(new DescribableModel<>(d.clazz), true)).append("\n\n");
                 } catch (Exception | Error ex) {
