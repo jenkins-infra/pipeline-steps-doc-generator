@@ -2,6 +2,8 @@ package org.jenkinsci.pipeline_steps_doc_generator;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.ClassicPluginStrategy;
 import hudson.Extension;
 import hudson.ExtensionComponent;
@@ -24,6 +26,7 @@ import org.jvnet.hudson.reactor.*;
 import static hudson.init.InitMilestone.*;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
@@ -394,6 +397,15 @@ public class HyperLocalPluginManger extends LocalPluginManager{
 
             return filtered;
         }
+    }
+
+    @Override
+    protected @NonNull Set<String> loadPluginsFromWar(String p){
+        return Collections.emptySet();
+    }
+
+    protected @NonNull Set<String> loadPluginsFromWar(@NonNull String fromPath, @CheckForNull FilenameFilter filter) {
+        return Collections.emptySet();
     }
 
     /**
