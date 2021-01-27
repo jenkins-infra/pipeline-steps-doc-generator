@@ -477,7 +477,8 @@ public class HyperLocalPluginManger extends LocalPluginManager{
             try {
                 return item.instance();
             } catch (Exception | Error e) {
-                LOG.log(Level.WARNING, "Cannot instantiate " + item.className(), e);
+                LOG.log(Level.WARNING, "Cannot instantiate " + item.className(),
+                        e.getCause() != null ? e.getCause() : e);
             }
             return null;
         }

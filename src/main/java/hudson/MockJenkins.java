@@ -14,6 +14,7 @@
  package hudson;
 
 import hudson.init.InitMilestone;
+import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.Hudson; //only needed until Hudson reference is removed from the ExtensionList.
 import jenkins.install.InstallState;
@@ -43,7 +44,7 @@ public class MockJenkins {
          when(mockJenkins.getPluginManager()).thenReturn(pm);
          when(mockJenkins.getInitLevel()).thenReturn(InitMilestone.COMPLETED);
          when(mockJenkins.getInstallState()).thenReturn(InstallState.TEST);
-         when(mockJenkins.getRootDir()).thenReturn(new File(System.getProperty("java.io.tmpdir")));
+         when(mockJenkins.getComputers()).thenReturn(new Computer[0]);
          try {
              Field lookup = mockJenkins.getClass().getField("lookup");
              lookup.setAccessible(true);
