@@ -14,8 +14,10 @@
  package hudson;
 
 import hudson.init.InitMilestone;
+import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.Hudson; //only needed until Hudson reference is removed from the ExtensionList.
+import jenkins.install.InstallState;
 import jenkins.model.Jenkins;
 import org.jenkinsci.pipeline_steps_doc_generator.HyperLocalPluginManger;
 
@@ -23,7 +25,10 @@ import static org.mockito.Mockito.*;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
- public class MockJenkins {
+import java.io.File;
+import java.lang.reflect.Field;
+
+public class MockJenkins {
      private MockExtensionLists mockLookup = new MockExtensionLists();
 
     /**
@@ -38,7 +43,15 @@ import org.mockito.stubbing.Answer;
          Jenkins mockJenkins = mock(Hudson.class); //required by ExtensionList
          when(mockJenkins.getPluginManager()).thenReturn(pm);
          when(mockJenkins.getInitLevel()).thenReturn(InitMilestone.COMPLETED);
-
+         when(mockJenkins.getInstallState()).thenReturn(InstallState.TEST);
+         when(mockJenkins.getComputers()).thenReturn(new Computer[0]);
+         try {
+             Field lookup = mockJenkins.getClass().getField("lookup");
+             lookup.setAccessible(true);
+             lookup.set(mockJenkins, new Lookup());
+         } catch (NoSuchFieldException | IllegalAccessException e) {
+             e.printStackTrace();
+         }
          doAnswer(new Answer<ExtensionList>() {
             @Override
             public ExtensionList answer(InvocationOnMock invocation) throws Throwable {
