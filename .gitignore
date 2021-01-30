@@ -4,6 +4,7 @@
 .*
 !.gitignore
 !.github/
+secrets/
 target/
 work
 /nbactions.xml
