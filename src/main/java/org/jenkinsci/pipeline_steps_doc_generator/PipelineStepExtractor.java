@@ -173,7 +173,7 @@ public class PipelineStepExtractor {
 
     private static Descriptor<?> getDescriptor(DescribableModel<?> delegateOptionSchema) {
         Class<?> delegateOptionType = delegateOptionSchema.getType();
-        return Jenkins.getInstance().getDescriptor(delegateOptionType.asSubclass(Describable.class));
+        return Jenkins.get().getDescriptor(delegateOptionType.asSubclass(Describable.class));
     }
 
     /**
