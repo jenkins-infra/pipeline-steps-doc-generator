@@ -13,10 +13,10 @@ import hudson.model.Descriptor;
 import hudson.model.JobPropertyDescriptor;
 import hudson.model.ParameterDefinition;
 import hudson.security.ACL;
+import hudson.security.ACLContext;
 import hudson.triggers.TriggerDescriptor;
 import jenkins.InitReactorRunner;
 import jenkins.model.Jenkins;
-import org.acegisecurity.context.SecurityContextHolder;
 import org.apache.commons.io.FileUtils;
 import org.jenkinsci.plugins.pipeline.modeldefinition.agent.DeclarativeAgentDescriptor;
 import org.jenkinsci.plugins.pipeline.modeldefinition.options.DeclarativeOptionDescriptor;
@@ -30,8 +30,8 @@ import org.jvnet.hudson.reactor.*;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -173,7 +173,7 @@ public class PipelineStepExtractor {
 
     private static Descriptor<?> getDescriptor(DescribableModel<?> delegateOptionSchema) {
         Class<?> delegateOptionType = delegateOptionSchema.getType();
-        return Jenkins.getInstance().getDescriptor(delegateOptionType.asSubclass(Describable.class));
+        return Jenkins.get().getDescriptor(delegateOptionType.asSubclass(Describable.class));
     }
 
     /**
@@ -191,18 +191,18 @@ public class PipelineStepExtractor {
             protected void runTask(Task task) throws Exception {
                 if (is!=null && is.skipInitTask(task))  return;
 
-                ACL.impersonate(ACL.SYSTEM); // full access in the initialization thread
                 String taskName = task.getDisplayName();
 
                 Thread t = Thread.currentThread();
                 String name = t.getName();
-                if (taskName !=null)
-                    t.setName(taskName);
-                try {
+
+                try (ACLContext context = ACL.as2(ACL.SYSTEM2)) { // full access in the initialization thread
+                    if (taskName !=null) {
+                        t.setName(taskName);
+                    }
                     super.runTask(task);
                 } finally {
                     t.setName(name);
-                    SecurityContextHolder.clearContext();
                 }
             }
         };
@@ -291,8 +291,8 @@ public class PipelineStepExtractor {
         }
     }
 
-    private Map<String, List<Descriptor>> processDescriptors(@Nonnull Class<? extends Descriptor> c,
-                                                             @Nonnull Map<String, List<Descriptor>> descMap,
+    private Map<String, List<Descriptor>> processDescriptors(@NonNull Class<? extends Descriptor> c,
+                                                             @NonNull Map<String, List<Descriptor>> descMap,
                                                              @CheckForNull Predicate<Descriptor> filter) {
         // If no filter was specified, default to true.
         if (filter == null) {
