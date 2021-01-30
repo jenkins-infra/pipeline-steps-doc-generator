@@ -30,8 +30,8 @@ import org.jvnet.hudson.reactor.*;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -291,8 +291,8 @@ public class PipelineStepExtractor {
         }
     }
 
-    private Map<String, List<Descriptor>> processDescriptors(@Nonnull Class<? extends Descriptor> c,
-                                                             @Nonnull Map<String, List<Descriptor>> descMap,
+    private Map<String, List<Descriptor>> processDescriptors(@NonNull Class<? extends Descriptor> c,
+                                                             @NonNull Map<String, List<Descriptor>> descMap,
                                                              @CheckForNull Predicate<Descriptor> filter) {
         // If no filter was specified, default to true.
         if (filter == null) {
