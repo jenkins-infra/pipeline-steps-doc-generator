@@ -3,6 +3,7 @@
 *.iws
 .*
 !.gitignore
+!.github/
 target/
 work
 /nbactions.xml
