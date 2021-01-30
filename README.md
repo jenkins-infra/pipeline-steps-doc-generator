@@ -42,7 +42,7 @@ From this repository, with others in relative positions:
 ```bash
 rm -v ../jenkins.io/content/doc/pipeline/steps/*.adoc
 make -C ../../jenkinsci/workflow-aggregator-plugin/demo copy-plugins
-mvn "-Dexec.args=-classpath %classpath org.jenkinsci.pipeline_steps_doc_generator.PipelineStepExtractor -homeDir $(pwd)/../../jenkinsci/workflow-aggregator-plugin/demo -asciiDest $(pwd)/../jenkins.io/content/doc/pipeline/steps -declarativeDest /tmp/declarative" -Dexec.executable=$(which java) org.codehaus.mojo:exec-maven-plugin:1.5.0:exec
+mvn "-Dexec.args=-classpath %classpath org.jenkinsci.pipeline_steps_doc_generator.PipelineStepExtractor -homeDir $(pwd)/../../jenkinsci/workflow-aggregator-plugin/demo -asciiDest $(pwd)/../jenkins.io/content/doc/pipeline/steps -declarativeDest /tmp/declarative" -Dexec.executable=$(which java) org.codehaus.mojo:exec-maven-plugin:3.0.0:exec
 make -C ../jenkins.io run
 ```
 
