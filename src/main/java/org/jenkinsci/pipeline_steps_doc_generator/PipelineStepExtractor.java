@@ -13,10 +13,10 @@ import hudson.model.Descriptor;
 import hudson.model.JobPropertyDescriptor;
 import hudson.model.ParameterDefinition;
 import hudson.security.ACL;
+import hudson.security.ACLContext;
 import hudson.triggers.TriggerDescriptor;
 import jenkins.InitReactorRunner;
 import jenkins.model.Jenkins;
-import org.acegisecurity.context.SecurityContextHolder;
 import org.apache.commons.io.FileUtils;
 import org.jenkinsci.plugins.pipeline.modeldefinition.agent.DeclarativeAgentDescriptor;
 import org.jenkinsci.plugins.pipeline.modeldefinition.options.DeclarativeOptionDescriptor;
@@ -191,18 +191,18 @@ public class PipelineStepExtractor {
             protected void runTask(Task task) throws Exception {
                 if (is!=null && is.skipInitTask(task))  return;
 
-                ACL.impersonate(ACL.SYSTEM); // full access in the initialization thread
                 String taskName = task.getDisplayName();
 
                 Thread t = Thread.currentThread();
                 String name = t.getName();
-                if (taskName !=null)
-                    t.setName(taskName);
-                try {
+
+                try (ACLContext context = ACL.as2(ACL.SYSTEM2)) { // full access in the initialization thread
+                    if (taskName !=null) {
+                        t.setName(taskName);
+                    }
                     super.runTask(task);
                 } finally {
                     t.setName(name);
-                    SecurityContextHolder.clearContext();
                 }
             }
         };
