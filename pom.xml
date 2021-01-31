@@ -58,6 +58,18 @@
     </plugins>
   </build>
 
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>io.jenkins.tools.bom</groupId>
+        <artifactId>bom-2.263.x</artifactId>
+        <version>18</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <dependencies>
     <dependency>
       <groupId>args4j</groupId>
@@ -67,7 +79,6 @@
     <dependency>
       <groupId>org.jenkins-ci.plugins.workflow</groupId>
       <artifactId>workflow-step-api</artifactId>
-      <version>2.23</version>
     </dependency>
     <dependency>
       <groupId>commons-io</groupId>
@@ -87,12 +98,10 @@
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>structs</artifactId>
-      <version>1.20</version>
     </dependency>
     <dependency>
       <groupId>org.jenkinsci.plugins</groupId>
       <artifactId>pipeline-model-extensions</artifactId>
-      <version>1.7.2</version>
     </dependency>
     <dependency>
       <groupId>net.java.sezpoz</groupId>
