@@ -42,7 +42,7 @@ pipeline {
             steps {
                 dir('docFolder') {
                     checkout scm
-                    sh 'mvn -s ../settings.xml clean install -DskipTests'
+                    sh 'mvn -s ../settings.xml --no-transfer-progress clean install -DskipTests'
                     sh 'mv ../plugins . && java -verbose:gc -jar ./target/*-bin/pipeline-steps-doc-generator*.jar'
                 }
             }
