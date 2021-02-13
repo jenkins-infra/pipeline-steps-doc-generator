@@ -4,9 +4,12 @@
 
 package hudson;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
+
+import hudson.model.listeners.SaveableListener;
 import org.jenkinsci.pipeline_steps_doc_generator.HyperLocalPluginManger;
 
 import static org.mockito.Mockito.*;
@@ -20,6 +23,11 @@ public class MockExtensionLists {
     private static Map<String, ExtensionList<?>> extensionLists = new HashMap<String, ExtensionList<?>>();
 
     public ExtensionList<?> getMockExtensionList(HyperLocalPluginManger hlpm, Jenkins hudson, Class<?> type) {
+        if (SaveableListener.class.equals(type)) {
+            ExtensionList<?> ret = mock(ExtensionList.class);
+            doReturn(Collections.emptyIterator()).when(ret).iterator();
+            return ret;
+        }
         if(extensionLists.get(type.getName()) != null) {
             return extensionLists.get(type.getName());
         } else {
