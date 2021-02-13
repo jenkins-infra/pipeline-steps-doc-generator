@@ -3,6 +3,7 @@ package org.jenkinsci.pipeline_steps_doc_generator;
 import hudson.model.Descriptor;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.jenkinsci.plugins.structs.SymbolLookup;
 import org.jenkinsci.plugins.structs.describable.ArrayType;
 import org.jenkinsci.plugins.structs.describable.AtomicType;
@@ -23,6 +24,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -37,6 +39,16 @@ import hudson.Main;
 
 public class ToAsciiDoc {
     private static final Logger LOG = Logger.getLogger(ToAsciiDoc.class.getName());
+    private static final Map<String, String> typeDescriptions = new HashMap<>();
+    public static final String ARRAY_LIST_OF = "Array / List of ";
+    public static final String BUILD_STEP_DESCRIPTION = "Build Step (<code>hudson.tasks.BuildStep</code>)";
+
+    static {
+        typeDescriptions.put("java.lang.Object", "<code>Object</code>");
+        typeDescriptions.put("java.util.List<java.lang.Object>", ARRAY_LIST_OF + "<code>Object</code>");
+        typeDescriptions.put("hudson.tasks.BuildStep", BUILD_STEP_DESCRIPTION);
+        typeDescriptions.put("java.util.List<hudson.tasks.BuildStep>", ARRAY_LIST_OF + BUILD_STEP_DESCRIPTION);
+    }
     /**
      * Keeps track of nested {@link DescribableModel#getType()} to avoid recursion.
      */
@@ -51,27 +63,26 @@ public class ToAsciiDoc {
         return "<div>" + Jsoup.clean(help, Whitelist.relaxed().addEnforcedAttribute("a", "rel", "nofollow")) + "</div>\n";
     }
 
-    private static String describeType(ParameterType type) throws Exception {
+    static String describeType(ParameterType type, String prefix) throws Exception {
         StringBuilder typeInfo = new StringBuilder();
         if (type instanceof AtomicType) {
-            typeInfo.append("<li><b>Type:</b> <code>").append(type).append("</code></li>");
+            typeInfo.append("<li><b>Type:</b> ").append(prefix).append(" <code>").append(type).append("</code></li>");
         } else if (type instanceof EnumType) {
             typeInfo
-                  .append("<li><b>Values:</b> ")
+                  .append("<li><b>").append(prefix).append("Values:</b> ")
                   .append(Arrays.stream((((EnumType) type).getValues())).map(v -> "<code>" + v + "</code>").collect(Collectors.joining(", ")))
                   .append("</li>");
         } else if (type instanceof ArrayType) {
             typeInfo
-                  .append("<b>Array/List</b><br/>\n")
-                  .append(describeType(((ArrayType) type).getElementType()));
+                  .append(describeType(((ArrayType) type).getElementType(), ARRAY_LIST_OF + prefix));
         } else if (type instanceof HomogeneousObjectType) {
             typeInfo
-                  .append("<b>Nested Object</b>\n")
+                  .append("<b>").append(prefix).append("Nested Object</b>\n")
                 // TODO may need to note a symbol if present
                   .append(generateHelp(((HomogeneousObjectType) type).getSchemaType(), false));
         } else if (type instanceof HeterogeneousObjectType) {
             typeInfo
-                  .append("<b>Nested Choice of Objects</b>\n");
+                  .append("<b>").append(prefix).append("Nested Choice of Objects</b>\n");
             if (((HeterogeneousObjectType) type).getType() != Object.class) {
                 for (Map.Entry<String, DescribableModel<?>> entry : ((HeterogeneousObjectType) type).getTypes().entrySet()) {
                     Set<String> symbols = SymbolLookup.getSymbolValue(entry.getValue().getType());
@@ -86,8 +97,7 @@ public class ToAsciiDoc {
             Exception x = ((ErrorType) type).getError();
             LOG.log(Level.FINE, "Encountered ErrorType object with exception:" + x);
             if(x instanceof NoStaplerConstructorException || x instanceof UnsupportedOperationException) {
-                String msg = x.toString();
-                typeInfo.append("<code>").append(msg.substring(msg.lastIndexOf(" ")).trim()).append("</code>\n");
+                typeInfo.append("<li><b>Type:</b> <code>").append(describeErrorType(type)).append("</code></li>\n");
             } else {
                 typeInfo.append("<code>").append(x).append("</code>\n");
             }
@@ -97,6 +107,10 @@ public class ToAsciiDoc {
         return typeInfo.toString();
     }
 
+    private static String describeErrorType(ParameterType type) {
+        return StringEscapeUtils.escapeHtml(type.getActualType().toString());
+    }
+
     private static String generateAttrHelp(DescribableParameter param) throws Exception {
         StringBuilder attrHelp = new StringBuilder();
         String help = param.getHelp();
@@ -104,7 +118,13 @@ public class ToAsciiDoc {
             attrHelp.append(helpify(help)).append("\n");
         }
         try {
-            String typeDesc = describeType(param.getType());
+            String typeDesc;
+            String rawTypeDesc = typeDescriptions.get(param.getRawType().getTypeName());
+            if (rawTypeDesc != null) {
+                typeDesc = "<li><b>Type:</b> " + rawTypeDesc + "</li>";
+            } else {
+                typeDesc = describeType(param.getType(), "");
+            }
             attrHelp.append("<ul>").append(typeDesc).append("</ul>");
         } catch (RuntimeException | Error ex) {
             LOG.log(Level.WARNING, "Restricted description of attribute "

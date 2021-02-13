@@ -25,8 +25,17 @@ import static org.mockito.Mockito.*;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import javax.servlet.RequestDispatcher;
+import javax.servlet.Servlet;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
 import java.io.File;
+import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Enumeration;
+import java.util.Set;
 
 public class MockJenkins {
      private MockExtensionLists mockLookup = new MockExtensionLists();
@@ -45,10 +54,14 @@ public class MockJenkins {
          when(mockJenkins.getInitLevel()).thenReturn(InitMilestone.COMPLETED);
          when(mockJenkins.getInstallState()).thenReturn(InstallState.TEST);
          when(mockJenkins.getComputers()).thenReturn(new Computer[0]);
+         when(mockJenkins.getRootDir()).thenReturn(new File(System.getProperty("java.io.tmpdir")));
          try {
              Field lookup = mockJenkins.getClass().getField("lookup");
              lookup.setAccessible(true);
              lookup.set(mockJenkins, new Lookup());
+             Field servletContext = mockJenkins.getClass().getField("servletContext");
+             servletContext.setAccessible(true);
+             servletContext.set(mockJenkins, mock(ServletContext.class));
          } catch (NoSuchFieldException | IllegalAccessException e) {
              e.printStackTrace();
          }
