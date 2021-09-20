@@ -25,7 +25,7 @@ pipeline {
                             poll: false,
                             url:'https://github.com/jenkinsci/backend-extension-indexer.git',
                         branch: 'master'
-                    sh 'mvn -s ../settings.xml clean install -DskipTests'
+                    sh 'mvn -s ../settings.xml --no-transfer-progress clean install -DskipTests'
                 }
             }
         }
