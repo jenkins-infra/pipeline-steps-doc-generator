@@ -88,7 +88,7 @@
     <dependency>
       <groupId>org.jenkins-ci.main</groupId>
       <artifactId>jenkins-core</artifactId>
-      <version>2.309-20210920.133534-2</version> <!-- TODO 3516369a785a30795a39b36d4665c88dd66fce21 -->
+      <version>2.309-20210920.124121-1</version> <!-- TODO f88c67e6f1470ae3daa5a289c8c317d992b5665c -->
     </dependency>
     <dependency>
       <groupId>javax.servlet</groupId>
