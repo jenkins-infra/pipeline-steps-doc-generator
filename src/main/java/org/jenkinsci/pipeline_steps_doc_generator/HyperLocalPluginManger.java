@@ -159,7 +159,8 @@ public class HyperLocalPluginManger extends LocalPluginManager{
                                             @Override
                                             protected void reactOnCycle(PluginWrapper q, List<PluginWrapper> cycle) {
 
-                                                LOG.severe("FATAL: found cycle in plugin dependencies: (root="+q+", deactivating all involved) "+Util.join(cycle," -> "));
+                                                CharSequence[] csCycle = cycle.toArray(new CharSequence[cycle.size()]);
+                                                LOG.severe("FATAL: found cycle in plugin dependencies: (root="+q+", deactivating all involved) "+String.join(" -> ", csCycle));
                                                 for (PluginWrapper pluginWrapper : cycle) {
                                                     pluginWrapper.setHasCycleDependency(true);
                                                     failedPlugins.add(new FailedPlugin(pluginWrapper.getShortName(), new CycleDetectedException(cycle)));
