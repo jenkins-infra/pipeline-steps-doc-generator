@@ -16,7 +16,7 @@ import org.jenkinsci.plugins.structs.describable.HomogeneousObjectType;
 import org.jenkinsci.plugins.structs.describable.ParameterType;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jsoup.Jsoup;
-import org.jsoup.safety.Whitelist;
+import org.jsoup.safety.Safelist;
 import org.kohsuke.stapler.NoStaplerConstructorException;
 import org.kohsuke.stapler.lang.Klass;
 
@@ -60,7 +60,7 @@ public class ToAsciiDoc {
     }
 
     private static String helpify(String help){
-        return "<div>" + Jsoup.clean(help, Whitelist.relaxed().addEnforcedAttribute("a", "rel", "nofollow")) + "</div>\n";
+        return "<div>" + Jsoup.clean(help, Safelist.relaxed().addEnforcedAttribute("a", "rel", "nofollow")) + "</div>\n";
     }
 
     static String describeType(ParameterType type, String prefix) throws Exception {

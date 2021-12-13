@@ -12,7 +12,7 @@ public class ToAsciidocTest {
         DescribableModel<DescribeMe> model = new DescribableModel<>(DescribeMe.class);
         try {
             String desc = ToAsciiDoc.describeType(model.getParameter("s").getType(), "");
-            assertEquals("<code>java.util.HashMap&lt;java.lang.String, java.lang.String&gt;</code>", desc.trim());
+            assertEquals("<li><b>Type:</b> <code>java.util.HashMap&lt;java.lang.String, java.lang.String&gt;</code></li>", desc.trim());
         } catch (Exception e) {
             fail("Cannot describe map " + e);
         }
