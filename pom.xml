@@ -36,7 +36,7 @@
             </manifest>
           </archive>
         </configuration>
-        <version>3.2.1</version>
+        <version>3.2.2</version>
       </plugin>
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
