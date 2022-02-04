@@ -1,17 +1,19 @@
 # pipeline-plugin-doc-generator
-Creates the documentation for pipeline jobs
+This projects generates the documentation for pipeline jobs.
 
 ## Development
 
-Rough outline of interactive development process:
+In order to install and run the project on your local machine, a rough outline of the steps is provided below.
 
-### Get repositories
+### 1. Get repositories
 
-You will need
+You will need to clone the following repositories
 
 * this repo (`jenkins-infra/pipeline-steps-doc-generator`)
 * `jenkins-infra/jenkins.io`
-* `jenkinsci/workflow-aggregator-plugin` (as an easy example)
+* `jenkinsci/schedule-build-plugin` (this plugin is only used as an easy example; you can run similar commands for other plugins too)
+
+> Make sure that the file structure on your local machine is matching with the one mentioned above
 
 You will need to temporarily patch `jenkins.io` as follows:
 
@@ -35,15 +37,50 @@ index d3ee8319..cf8e38d2 100755
      'content/_data/_generated/lts_baselines.yml',
 ```
 
-### Create content
+### 2. Create content
 
-From this repository, with others in relative positions:
+You will need to manually create a Makefile inside `jenkinsci/schedule-build-plugin`; then add the following:
+
+> The `copy-plugins` command copies the plugins into the target folder
+
+```
+TAG=$(shell date -I -u)
+IMAGE=jenkinsci/schedule-build-plugin
+
+copy-plugins:
+	if [ \! -f target/test-classes/test-dependencies/index -o \
+	     pom.xml -nt target/test-classes/test-dependencies/index ]; then \
+	    mvn clean validate hpi:resolve-test-dependencies; fi
+	rm -rf plugins
+	mkdir plugins
+	cp -v target/test-classes/test-dependencies/*.hpi plugins
+ ```
+
+
+Next, run the following commands from this repository (with others in relative positions):
 
 ```bash
 rm -v ../jenkins.io/content/doc/pipeline/steps/*.adoc
-make -C ../../jenkinsci/workflow-aggregator-plugin/demo copy-plugins
-mvn "-Dexec.args=-classpath %classpath org.jenkinsci.pipeline_steps_doc_generator.PipelineStepExtractor -homeDir $(pwd)/../../jenkinsci/workflow-aggregator-plugin/demo -asciiDest $(pwd)/../jenkins.io/content/doc/pipeline/steps -declarativeDest /tmp/declarative" -Dexec.executable=$(which java) org.codehaus.mojo:exec-maven-plugin:3.0.0:exec
+```
+
+> This command runs the makefile created earlier
+```
+make -C ../../jenkinsci/schedule-build-plugin copy-plugins
+```
+```
+mvn clean install
+```
+
+Next, execute the following line to run this project and generate the documentation.
+> Note: In case you're working with another plugin, you can replace the path after `-homeDir $(pwd)/../../` with that of your plugin
+
+```
+mvn "-Dexec.args=-classpath %classpath org.jenkinsci.pipeline_steps_doc_generator.PipelineStepExtractor -homeDir $(pwd)/../../jenkinsci/schedule-build-plugin -asciiDest $(pwd)/../jenkins.io/content/doc/pipeline/steps -declarativeDest /tmp/declarative" -Dexec.executable=$(which java) org.codehaus.mojo:exec-maven-plugin:3.0.0:exec
+```
+Finally, build and run the jenkins website
+```
 make -C ../jenkins.io run
 ```
 
-Then browse: http://localhost:4242/doc/pipeline/steps/
+
+Then browse to: http://localhost:4242/doc/pipeline/steps/
