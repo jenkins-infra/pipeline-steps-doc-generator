@@ -20,7 +20,7 @@ To setup a development environment for this repository, you will need to clone t
 
 Make sure that the file structure on your local machine matches the one shown below.
 
-```Shell
+```
 ├── ...
 │   ├── jenkins-infra
 │   │   ├── pipeline-steps-doc-generator
@@ -84,7 +84,7 @@ Run the following commands with current directory set to `jenkins-infra/pipeline
 rm -v ../jenkins.io/content/doc/pipeline/steps/*.adoc
 ```
 
-* Run the `Makefile` created in [Step 4](https://github.com/vihaanthora/gsoc-progress/new/main#4-create-makefile).
+* Run the `Makefile` created in [Step 4](#4-create-makefile).
 
 ```Shell
 make -C ../../jenkinsci/schedule-build-plugin copy-plugins
