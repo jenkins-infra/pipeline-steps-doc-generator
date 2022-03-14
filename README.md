@@ -110,4 +110,4 @@ mvn "-Dexec.args=-classpath %classpath org.jenkinsci.pipeline_steps_doc_generato
 make -C ../jenkins.io run
 ```
 
-You can then browse to [this](http://localhost:4242/doc/pipeline/steps/) link to see the running instance of `jenkins.io` on your `localhost`.
+You can then browse to [Pipeline Steps Reference](http://localhost:4242/doc/pipeline/steps/) to see the running instance of `jenkins.io` on your `localhost`.
