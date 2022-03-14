@@ -1,86 +1,113 @@
-# pipeline-plugin-doc-generator
-This projects generates the documentation for pipeline jobs.
+# pipeline-steps-doc-generator
+
+This project generates the documentation for pipeline jobs.
 
 ## Development
 
 In order to install and run the project on your local machine, a rough outline of the steps is provided below.
 
-### 1. Get repositories
+### 1. Clone Repositories
 
-You will need to clone the following repositories
+To setup a development environment for this repository, you will need to clone the following repositories.
 
-* this repo (`jenkins-infra/pipeline-steps-doc-generator`)
-* `jenkins-infra/jenkins.io`
-* `jenkinsci/schedule-build-plugin` (this plugin is only used as an easy example; you can run similar commands for other plugins too)
+* [`jenkins-infra/pipeline-steps-doc-generator`](https://github.com/jenkins-infra/pipeline-steps-doc-generator/)
+* [`jenkins-infra/jenkins.io`](https://github.com/jenkins-infra/jenkins.io)
+* [`jenkinsci/schedule-build-plugin`](https://github.com/jenkinsci/schedule-build-plugin)
 
-> Make sure that the file structure on your local machine is matching with the one mentioned above
+>**NOTE:** The plugin `jenkinsci/schedule-build-plugin` is just used as an example. You can follow the similar instructions to generate the pipeline steps documentation for other plugins as well.
 
-You will need to temporarily patch `jenkins.io` as follows:
+### 2. Arrange Files
+
+Make sure that the file structure on your local machine matches the one shown below.
+
+```Shell
+├── ...
+│   ├── jenkins-infra
+│   │   ├── pipeline-steps-doc-generator
+|   |   ├── jenkins.io
+│   ├── jenkinsci
+│   │   ├── schedule-build-plugin
+```
+
+### 3. Patch `jenkins.io`
+
+You will need to temporarily patch `jenkins.io` as shown below. This is done so that it does not fetch the existing AsciiDoc from external resources,
+but uses the AsciiDoc for the `schedule-build-plugin` generated locally.
+
+* Navigate to `jenkins.io/scripts/fetch-external-resources`.
+* Comment out the following lines from the code.
 
 ```diff
-diff --git a/scripts/fetch-external-resources b/scripts/fetch-external-resources
-index d3ee8319..cf8e38d2 100755
---- a/scripts/fetch-external-resources
-+++ b/scripts/fetch-external-resources
-@@ -25,12 +25,6 @@ RESOURCES = [
-     nil,
-     nil
-   ],
 -  [
 -    'https://ci.jenkins.io/job/Infra/job/pipeline-steps-doc-generator/job/master/lastSuccessfulBuild/artifact/allAscii.zip',
 -    'content/_tmp/allAscii.zip',
 -    nil,
 -    'content/doc/pipeline/steps'
 -  ],
-   [
-     'https://repo.jenkins-ci.org/api/search/versions?g=org.jenkins-ci.main&a=jenkins-core&repos=releases&v=?.*.1',
-     'content/_data/_generated/lts_baselines.yml',
+
++ # [
++ #   'https://ci.jenkins.io/job/Infra/job/pipeline-steps-doc-generator/job/master/lastSuccessfulBuild/artifact/allAscii.zip',
++ #   'content/_tmp/allAscii.zip',
++ #   nil,
++ #   'content/doc/pipeline/steps'
++ # ],
 ```
 
-### 2. Create content
+### 4. Create `Makefile`
 
-You will need to manually create a Makefile inside `jenkinsci/schedule-build-plugin`; then add the following:
+* Create a file named `Makefile` inside the `jenkinsci/schedule-build-plugin` folder.
+* Insert the following code in the file.
 
-> The `copy-plugins` command copies the plugins into the target folder
-
-```
+```Makefile
 TAG=$(shell date -I -u)
-IMAGE=jenkinsci/schedule-build-plugin
 
 copy-plugins:
-	if [ \! -f target/test-classes/test-dependencies/index -o \
-	     pom.xml -nt target/test-classes/test-dependencies/index ]; then \
-	    mvn clean validate hpi:resolve-test-dependencies; fi
-	rm -rf plugins
-	mkdir plugins
-	cp -v target/test-classes/test-dependencies/*.hpi plugins
+     if [ \! -f target/test-classes/test-dependencies/index -o \
+          pom.xml -nt target/test-classes/test-dependencies/index ]; then \
+          mvn clean validate hpi:resolve-test-dependencies; fi
+     rm -rf plugins
+     mkdir plugins
+     cp -v target/test-classes/test-dependencies/*.hpi plugins
  ```
 
+> The `copy-plugins` command copies the plugins into the target folder.
 
-Next, run the following commands from this repository (with others in relative positions):
+### 5. Run Commands
 
-```bash
+Run the following commands with current directory set to `jenkins-infra/pipeline-steps-doc-generator`.
+
+> **NOTE:** The commands below currently work only with Linux and MacOS. If you are using Windows, the easiest way would be to use [WSL](https://docs.microsoft.com/en-us/windows/wsl/).
+
+* Remove previously existing pipeline steps AsciiDoc from `jenkins.io`, if any.
+
+```Shell
 rm -v ../jenkins.io/content/doc/pipeline/steps/*.adoc
 ```
 
-> This command runs the makefile created earlier
-```
+* Run the `Makefile` created in [Step 4](https://github.com/vihaanthora/gsoc-progress/new/main#4-create-makefile).
+
+```Shell
 make -C ../../jenkinsci/schedule-build-plugin copy-plugins
 ```
-```
+
+* Install the `pipeline-steps-doc-generator` modules.
+
+```Shell
 mvn clean install
 ```
 
-Next, execute the following line to run this project and generate the documentation.
-> Note: In case you're working with another plugin, you can replace the path after `-homeDir $(pwd)/../../` with that of your plugin
+* Run this project and generate the documentation.
 
-```
+> **NOTE:** If you are working with another plugin, replace the path after `-homeDir $(pwd)/../../` with that of your plugin.
+
+```Shell
 mvn "-Dexec.args=-classpath %classpath org.jenkinsci.pipeline_steps_doc_generator.PipelineStepExtractor -homeDir $(pwd)/../../jenkinsci/schedule-build-plugin -asciiDest $(pwd)/../jenkins.io/content/doc/pipeline/steps -declarativeDest /tmp/declarative" -Dexec.executable=$(which java) org.codehaus.mojo:exec-maven-plugin:3.0.0:exec
 ```
-Finally, build and run the jenkins website
-```
+
+* Finally, build and run the `jenkins.io` website.
+
+```Shell
 make -C ../jenkins.io run
 ```
 
-
-Then browse to: http://localhost:4242/doc/pipeline/steps/
+You can then browse to [Pipeline Steps Reference](http://localhost:4242/doc/pipeline/steps/) to see the running instance of `jenkins.io` on your `localhost`.
