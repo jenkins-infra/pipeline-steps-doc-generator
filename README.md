@@ -86,6 +86,8 @@ rm -v ../jenkins.io/content/doc/pipeline/steps/*.adoc
 
 * Run the `Makefile` created in [Step 4](#4-create-makefile).
 
+>**OPTIONAL:** Add `plugins` folder to the `.gitignore` file of all the plugins on which you wish to run the code to prevent flooding the git tracker of your IDE/Editor.
+
 ```Shell
 make -C ../../jenkinsci/schedule-build-plugin copy-plugins
 ```
