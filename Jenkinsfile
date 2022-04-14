@@ -1,7 +1,7 @@
 #!/usr/bin/env groovy
 
 pipeline {
-    agent { label 'maven-11' }
+    agent { label 'vm' }
     triggers {
         cron('H H * * 0')
     }
