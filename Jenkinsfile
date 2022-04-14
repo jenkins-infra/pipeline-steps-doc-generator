@@ -1,13 +1,14 @@
 #!/usr/bin/env groovy
 
 pipeline {
-    agent { label 'maven-11' }
+    agent { label 'vm && linux' }
     triggers {
         cron('H H * * 0')
     }
 
     options {
         timestamps()
+        timeout(time: 1, unit: 'HOURS')
     }
 
     stages {
@@ -33,7 +34,7 @@ pipeline {
         stage('Run Indexer') {
             steps {
                 dir('pluginFolder') {
-                    sh 'java -verbose:gc -jar ./target/*-bin/extension-indexer*.jar -plugins ./plugins && mv plugins ..'
+                    sh 'java -verbose:gc -XshowSettings:vm -jar ./target/*-bin/extension-indexer*.jar -plugins ./plugins && mv plugins ..'
                 }
             }
         }
@@ -43,7 +44,7 @@ pipeline {
                 dir('docFolder') {
                     checkout scm
                     sh 'mvn -s ../settings.xml --no-transfer-progress clean install -DskipTests'
-                    sh 'mv ../plugins . && java -verbose:gc -jar ./target/*-bin/pipeline-steps-doc-generator*.jar'
+                    sh 'mv ../plugins . && java -verbose:gc -XshowSettings:vm -jar ./target/*-bin/pipeline-steps-doc-generator*.jar'
                 }
             }
         }
