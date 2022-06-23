@@ -1,7 +1,37 @@
 package org.jenkinsci.pipeline_steps_doc_generator;
 
+import static hudson.init.InitMilestone.PLUGINS_LISTED;
+
+import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.lang.ref.WeakReference;
+import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.jvnet.hudson.reactor.Executable;
+import org.jvnet.hudson.reactor.Reactor;
+import org.jvnet.hudson.reactor.TaskBuilder;
+import org.jvnet.hudson.reactor.TaskGraphBuilder;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.ClassicPluginStrategy;
@@ -11,7 +41,6 @@ import hudson.ExtensionFinder;
 import hudson.LocalPluginManager;
 import hudson.PluginManager;
 import hudson.PluginWrapper;
-import hudson.Util;
 import hudson.init.InitStrategy;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
@@ -21,23 +50,6 @@ import jenkins.ExtensionComponentSet;
 import jenkins.ExtensionFilter;
 import net.java.sezpoz.Index;
 import net.java.sezpoz.IndexItem;
-import org.jvnet.hudson.reactor.*;
-
-import static hudson.init.InitMilestone.*;
-
-import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.lang.reflect.AnnotatedElement;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.ref.WeakReference;
-import java.net.URL;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Acts as a PluginManager that operates outside the normal startup process of Jenkins.  Essentially, this captures the
@@ -47,17 +59,17 @@ import java.util.logging.Logger;
  * Since this PluginManager operates on such a local scale, many classes associated with it are also changed to not
  * use calls to Jenkins.
  */
-public class HyperLocalPluginManger extends LocalPluginManager{
-    private static final Logger LOG = Logger.getLogger(HyperLocalPluginManger.class.getName());
+public class HyperLocalPluginManager extends LocalPluginManager{
+    private static final Logger LOG = Logger.getLogger(HyperLocalPluginManager.class.getName());
     private final ModClassicPluginStrategy strategy;
     public final UberPlusClassLoader uberPlusClassLoader = new UberPlusClassLoader();
     private final boolean checkCycles;
 
-    public HyperLocalPluginManger(boolean cycles){
+    public HyperLocalPluginManager(boolean cycles){
         this(".", cycles);
     }
 
-    public HyperLocalPluginManger(String rootDir, boolean cycles) {
+    public HyperLocalPluginManager(String rootDir, boolean cycles) {
         super(new File(rootDir));
         this.strategy = createModPluginStrategy();
         checkCycles = cycles;
@@ -86,7 +98,7 @@ public class HyperLocalPluginManger extends LocalPluginManager{
             {
                 Handle listUpPlugins = add("Listing up plugins", new Executable() {
                     public void run(Reactor session) throws Exception {
-                        archives = initStrategy.listPluginArchives(HyperLocalPluginManger.this);
+                        archives = initStrategy.listPluginArchives(HyperLocalPluginManager.this);
                     }
                 });
 
@@ -330,7 +342,7 @@ public class HyperLocalPluginManger extends LocalPluginManager{
     public static class ModClassicPluginStrategy extends ClassicPluginStrategy {
         private final ClassLoader classLoader;
 
-        public ModClassicPluginStrategy(HyperLocalPluginManger pluginManager) {
+        public ModClassicPluginStrategy(HyperLocalPluginManager pluginManager) {
             super(pluginManager);
             classLoader = pluginManager.uberPlusClassLoader;
         }
@@ -529,4 +541,3 @@ public class HyperLocalPluginManger extends LocalPluginManager{
     }
 
 }
-

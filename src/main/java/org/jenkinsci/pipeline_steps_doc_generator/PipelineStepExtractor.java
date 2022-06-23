@@ -78,16 +78,16 @@ public class PipelineStepExtractor {
         System.exit(0); //otherwise environment hangs around
     }
 
-    public HyperLocalPluginManger pluginManager;
+    public HyperLocalPluginManager pluginManager;
 
     public Map<String, Map<String, List<QuasiDescriptor>>> findSteps(){
         Map<String, Map<String, List<QuasiDescriptor>>> completeListing = new HashMap<>();
         try {
             //setup
             if(homeDir == null){
-                pluginManager = new HyperLocalPluginManger(false);
+                pluginManager = new HyperLocalPluginManager(false);
             } else {
-                pluginManager = new HyperLocalPluginManger(homeDir, false);
+                pluginManager = new HyperLocalPluginManager(homeDir, false);
             }
 
             // Set up mocks

@@ -4,25 +4,28 @@
 
 package hudson;
 
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+
 import java.util.Collections;
-import java.util.List;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import hudson.model.listeners.SaveableListener;
-import org.jenkinsci.pipeline_steps_doc_generator.HyperLocalPluginManger;
-
-import static org.mockito.Mockito.*;
-import org.mockito.stubbing.Answer;
+import org.jenkinsci.pipeline_steps_doc_generator.HyperLocalPluginManager;
 import org.mockito.invocation.InvocationOnMock;
-import hudson.ExtensionList;
+import org.mockito.stubbing.Answer;
+
 import hudson.model.Hudson;
+import hudson.model.listeners.SaveableListener;
 import jenkins.model.Jenkins;
 
 public class MockExtensionLists {
     private static Map<String, ExtensionList<?>> extensionLists = new HashMap<String, ExtensionList<?>>();
 
-    public ExtensionList<?> getMockExtensionList(HyperLocalPluginManger hlpm, Jenkins hudson, Class<?> type) {
+    public ExtensionList<?> getMockExtensionList(HyperLocalPluginManager hlpm, Jenkins hudson, Class<?> type) {
         if (SaveableListener.class.equals(type)) {
             ExtensionList<?> ret = mock(ExtensionList.class);
             doReturn(Collections.emptyIterator()).when(ret).iterator();
@@ -40,7 +43,7 @@ public class MockExtensionLists {
     private class MockExtensionList<T> {
         ExtensionList<T> mockExtensionList;
 
-        public MockExtensionList(HyperLocalPluginManger hlpm, Jenkins hudson, Class<T> type) {
+        public MockExtensionList(HyperLocalPluginManager hlpm, Jenkins hudson, Class<T> type) {
             ExtensionList<T> realList = ExtensionList.create(hudson, type);
             mockExtensionList = spy(realList);
 
@@ -48,7 +51,7 @@ public class MockExtensionLists {
             doAnswer(mockLoad(hlpm)).when(mockExtensionList).load();
         }
 
-        private Answer<List<ExtensionComponent<T>>> mockLoad(HyperLocalPluginManger hlpm) {
+        private Answer<List<ExtensionComponent<T>>> mockLoad(HyperLocalPluginManager hlpm) {
             return new Answer<List<ExtensionComponent<T>>>() {
                 public List<ExtensionComponent<T>> answer(InvocationOnMock invocation) throws Throwable {
                     return hlpm.getPluginStrategy().findComponents(mockExtensionList.extensionType, (Hudson)null);

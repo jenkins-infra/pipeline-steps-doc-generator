@@ -1,6 +1,18 @@
 package org.jenkinsci.pipeline_steps_doc_generator;
 
-import hudson.model.Descriptor;
+import java.io.IOException;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.Stack;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringEscapeUtils;
@@ -20,22 +32,9 @@ import org.jsoup.safety.Safelist;
 import org.kohsuke.stapler.NoStaplerConstructorException;
 import org.kohsuke.stapler.lang.Klass;
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.Stack;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-
 //fake out unit tests
 import hudson.Main;
+import hudson.model.Descriptor;
 
 public class ToAsciiDoc {
     private static final Logger LOG = Logger.getLogger(ToAsciiDoc.class.getName());

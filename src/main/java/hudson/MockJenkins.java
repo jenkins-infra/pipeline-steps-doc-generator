@@ -13,29 +13,26 @@
  */
  package hudson;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.io.File;
+import java.lang.reflect.Field;
+
+import javax.servlet.ServletContext;
+
+import org.jenkinsci.pipeline_steps_doc_generator.HyperLocalPluginManager;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+
 import hudson.init.InitMilestone;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.Hudson; //only needed until Hudson reference is removed from the ExtensionList.
 import jenkins.install.InstallState;
 import jenkins.model.Jenkins;
-import org.jenkinsci.pipeline_steps_doc_generator.HyperLocalPluginManger;
-
-import static org.mockito.Mockito.*;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-
-import javax.servlet.RequestDispatcher;
-import javax.servlet.Servlet;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import java.io.File;
-import java.io.InputStream;
-import java.lang.reflect.Field;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Enumeration;
-import java.util.Set;
 
 public class MockJenkins {
      private MockExtensionLists mockLookup = new MockExtensionLists();
@@ -48,7 +45,7 @@ public class MockJenkins {
      *     * getPlugin        -> get the Plugin information from HyperLocalPluginManager
      */
      @SuppressWarnings({"unchecked", "rawtypes"})
-     public Jenkins getMockJenkins(HyperLocalPluginManger pm) {
+     public Jenkins getMockJenkins(HyperLocalPluginManager pm) {
          Jenkins mockJenkins = mock(Hudson.class); //required by ExtensionList
          when(mockJenkins.getPluginManager()).thenReturn(pm);
          when(mockJenkins.getInitLevel()).thenReturn(InitMilestone.COMPLETED);

@@ -1,9 +1,11 @@
 package org.jenkinsci.pipeline_steps_doc_generator;
 
-import hudson.model.Descriptor;
 import java.util.Set;
+
 import org.jenkinsci.plugins.structs.SymbolLookup;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
+
+import hudson.model.Descriptor;
 
 /**
  * Generalization of {@link StepDescriptor} to handle metasteps.
