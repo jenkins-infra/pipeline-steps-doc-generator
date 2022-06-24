@@ -70,7 +70,7 @@ public class PipelineStepExtractor {
         try{
             Map<String, Map<String, List<QuasiDescriptor>>> steps = pse.findSteps();
             pse.generateAscii(steps, pse.pluginManager);
-            pse.getDeclarativeSteps();
+            pse.generateDeclarativeSteps();
         } catch(Exception ex){
             LOG.log(Level.SEVERE, "Error in finding all the steps", ex);
         }
@@ -247,7 +247,7 @@ public class PipelineStepExtractor {
         }
     }
 
-    public void getDeclarativeSteps() {
+    public void generateDeclarativeSteps() {
         DeclarativeSteps ds = new DeclarativeSteps();
         ds.generateDeclarativeAscii(declarativeDest, pluginManager);
     }
