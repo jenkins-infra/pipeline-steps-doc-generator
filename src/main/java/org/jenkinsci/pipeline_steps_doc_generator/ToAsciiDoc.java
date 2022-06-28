@@ -1,6 +1,18 @@
 package org.jenkinsci.pipeline_steps_doc_generator;
 
-import hudson.model.Descriptor;
+import java.io.IOException;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.Stack;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringEscapeUtils;
@@ -20,22 +32,9 @@ import org.jsoup.safety.Safelist;
 import org.kohsuke.stapler.NoStaplerConstructorException;
 import org.kohsuke.stapler.lang.Klass;
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.Stack;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-
 //fake out unit tests
 import hudson.Main;
+import hudson.model.Descriptor;
 
 public class ToAsciiDoc {
     private static final Logger LOG = Logger.getLogger(ToAsciiDoc.class.getName());
@@ -65,16 +64,17 @@ public class ToAsciiDoc {
 
     static String describeType(ParameterType type, String prefix) throws Exception {
         StringBuilder typeInfo = new StringBuilder();
-        if (type instanceof AtomicType) {
-            typeInfo.append("<li><b>Type:</b> ").append(prefix).append(" <code>").append(type).append("</code></li>");
-        } else if (type instanceof EnumType) {
+        if (type instanceof EnumType) {
             typeInfo
                   .append("<li><b>").append(prefix).append("Values:</b> ")
                   .append(Arrays.stream((((EnumType) type).getValues())).map(v -> "<code>" + v + "</code>").collect(Collectors.joining(", ")))
                   .append("</li>");
         } else if (type instanceof ArrayType) {
-            typeInfo
-                  .append(describeType(((ArrayType) type).getElementType(), ARRAY_LIST_OF + prefix));
+            type = ((ArrayType) type).getElementType();
+            if(!(type instanceof AtomicType)) {
+                typeInfo
+                .append(describeType(type, ARRAY_LIST_OF + prefix));
+            }
         } else if (type instanceof HomogeneousObjectType) {
             typeInfo
                   .append("<b>").append(prefix).append("Nested Object</b>\n")
@@ -106,7 +106,7 @@ public class ToAsciiDoc {
         }
         return typeInfo.toString();
     }
-
+    
     private static String describeErrorType(ParameterType type) {
         return StringEscapeUtils.escapeHtml(type.getActualType().toString());
     }
@@ -114,23 +114,45 @@ public class ToAsciiDoc {
     private static String generateAttrHelp(DescribableParameter param) throws Exception {
         StringBuilder attrHelp = new StringBuilder();
         String help = param.getHelp();
-        if (help != null && !help.equals("")) {
-            attrHelp.append(helpify(help)).append("\n");
-        }
         try {
-            String typeDesc;
-            String rawTypeDesc = typeDescriptions.get(param.getRawType().getTypeName());
-            if (rawTypeDesc != null) {
-                typeDesc = "<li><b>Type:</b> " + rawTypeDesc + "</li>";
-            } else {
-                typeDesc = describeType(param.getType(), "");
+            if (help != null && !help.equals("")) {
+                attrHelp.append(helpify(help)).append("\n");
             }
-            attrHelp.append("<ul>").append(typeDesc).append("</ul>");
+            String typeDesc;
+            ParameterType type = param.getType();
+            if (!(type instanceof AtomicType)) {
+                typeDesc = describeType(param.getType(), "");
+                attrHelp.append("<ul>").append(typeDesc).append("</ul>");
+            }
         } catch (RuntimeException | Error ex) {
             LOG.log(Level.WARNING, "Restricted description of attribute "
-                + param.getName(), ex);
+            + param.getName(), ex);
         }
         return attrHelp.toString();
+    }
+
+    private static String getTypeDescription(DescribableParameter param) throws Exception {
+        String typeDesc = "";
+        try {
+            String rawTypeDesc = typeDescriptions.get(param.getRawType().getTypeName());
+            if (rawTypeDesc != null) {
+                typeDesc = " : " + rawTypeDesc;
+            } else {
+                ParameterType type = param.getType();
+                if (type instanceof AtomicType) {
+                    typeDesc = " : " + type;
+                } else if (type instanceof ArrayType) {
+                    type = ((ArrayType) type).getElementType();
+                    if(type instanceof AtomicType) {
+                        typeDesc = " : " + ARRAY_LIST_OF + type;
+                    }
+                }
+            }
+        } catch (RuntimeException | Error ex) {
+            LOG.log(Level.WARNING, "Restricted description of attribute "
+            + param.getName(), ex);
+        }
+        return typeDesc;
     }
 
     private static String generateHelp(DescribableModel<?> model, boolean indent) throws Exception {
@@ -154,12 +176,12 @@ public class ToAsciiDoc {
                 DescribableParameter p = (DescribableParameter) o;
                 if(p.isRequired()) {
                     total
-                          .append("<li><code>").append(p.getName()).append("</code>").append("\n")
+                          .append("<li><code>").append(p.getName()).append(getTypeDescription(p)).append("</code>").append("\n")
                           .append(generateAttrHelp(p))
                           .append("</li>\n");
                 } else {
                     optionalParams
-                          .append("<li><code>").append(p.getName()).append("</code> (optional)").append("\n")
+                          .append("<li><code>").append(p.getName()).append(getTypeDescription(p)).append("</code> (optional)").append("\n")
                           .append(generateAttrHelp(p))
                           .append("</li>\n");
                 }
