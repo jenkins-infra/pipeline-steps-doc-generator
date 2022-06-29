@@ -106,7 +106,7 @@ public class ToAsciiDoc {
         }
         return typeInfo.toString();
     }
-    
+
     private static String describeErrorType(ParameterType type) {
         return StringEscapeUtils.escapeHtml(type.getActualType().toString());
     }
