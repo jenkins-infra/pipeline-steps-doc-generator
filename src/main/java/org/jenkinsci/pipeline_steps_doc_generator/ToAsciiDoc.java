@@ -114,15 +114,18 @@ public class ToAsciiDoc {
     private static String generateAttrHelp(DescribableParameter param) throws Exception {
         StringBuilder attrHelp = new StringBuilder();
         String help = param.getHelp();
+        if (help != null && !help.equals("")) {
+            attrHelp.append(helpify(help)).append("\n");
+        }
         try {
-            if (help != null && !help.equals("")) {
-                attrHelp.append(helpify(help)).append("\n");
-            }
             String typeDesc;
-            ParameterType type = param.getType();
-            if (!(type instanceof AtomicType)) {
-                typeDesc = describeType(param.getType(), "");
-                attrHelp.append("<ul>").append(typeDesc).append("</ul>");
+            String rawTypeDesc = typeDescriptions.get(param.getRawType().getTypeName());
+            if (rawTypeDesc == null) {
+                ParameterType type = param.getType();
+                if (!(type instanceof AtomicType)) {
+                    typeDesc = describeType(type, "");
+                    attrHelp.append("<ul>").append(typeDesc).append("</ul>");
+                }
             }
         } catch (RuntimeException | Error ex) {
             LOG.log(Level.WARNING, "Restricted description of attribute "
