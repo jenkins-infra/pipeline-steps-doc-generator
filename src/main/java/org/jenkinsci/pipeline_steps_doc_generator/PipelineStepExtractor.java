@@ -6,6 +6,8 @@ import static org.mockito.Mockito.when;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.net.URL;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,10 +21,12 @@ import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.jenkinsci.plugins.structs.describable.DescribableModel;
 import org.jenkinsci.plugins.structs.describable.DescribableParameter;
 import org.jenkinsci.plugins.structs.describable.HeterogeneousObjectType;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
+import org.json.JSONObject;
 import org.jvnet.hudson.reactor.Reactor;
 import org.jvnet.hudson.reactor.ReactorException;
 import org.jvnet.hudson.reactor.Task;
@@ -229,6 +233,14 @@ public class PipelineStepExtractor {
         } else {
             allAscii = new File("allAscii");
         }
+
+        JSONObject deprecatedPlugins = new JSONObject();
+        try {
+            deprecatedPlugins = new JSONObject(IOUtils.toString(new URL("https://updates.jenkins.io/current/update-center.actual.json"), Charset.forName("UTF-8"))).getJSONObject("deprecations");
+        } catch(IOException ex) {
+            LOG.log(Level.WARNING, "Update center could not be read" + ex);
+        }
+
         allAscii.mkdirs();
         String allAsciiPath = allAscii.getAbsolutePath();
         for(String plugin : allSteps.keySet()){
@@ -236,7 +248,8 @@ public class PipelineStepExtractor {
             Map<String, List<QuasiDescriptor>> byPlugin = allSteps.get(plugin);
             PluginWrapper thePlugin = pluginManager.getPlugin(plugin);
             String displayName = thePlugin == null ? "Jenkins Core" : thePlugin.getDisplayName();
-            String whole9yards = ToAsciiDoc.generatePluginHelp(plugin, displayName, byPlugin, true);
+            boolean isDeprecated = deprecatedPlugins.has(plugin);
+            String whole9yards = ToAsciiDoc.generatePluginHelp(plugin, displayName, byPlugin, isDeprecated, true);
 
             try {
                 FileUtils.writeStringToFile(new File(allAsciiPath, plugin + ".adoc"), whole9yards, StandardCharsets.UTF_8);
