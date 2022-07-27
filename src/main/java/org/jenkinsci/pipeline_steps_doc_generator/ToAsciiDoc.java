@@ -301,7 +301,7 @@ public class ToAsciiDoc {
      *
      * @return String  total documentation for the page
      */
-    public static String generatePluginHelp(String pluginName, String displayName, Map<String, List<QuasiDescriptor>> byPlugin, boolean genHeader){
+    public static String generatePluginHelp(String pluginName, String displayName, Map<String, List<QuasiDescriptor>> byPlugin, boolean isDeprecated, boolean genHeader){
         Main.isUnitTest = true;
 
         //TODO: if condition
@@ -310,7 +310,7 @@ public class ToAsciiDoc {
             whole9yards.append(generateHeader(displayName));
         }
 
-        whole9yards.append("== ").append(displayName).append("\n\n");
+        whole9yards.append("== ").append(displayName).append(isDeprecated ? " (deprecated)" : "").append("\n\n");
         if (!"core".equals(pluginName)) {
             whole9yards.append("plugin:").append(pluginName).append("[View this plugin on the Plugins site]\n\n");
         }
