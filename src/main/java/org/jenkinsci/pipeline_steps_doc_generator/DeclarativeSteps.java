@@ -13,6 +13,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.io.FileUtils;
+import org.jenkinsci.infra.tools.HyperLocalPluginManager;
 import org.jenkinsci.plugins.pipeline.modeldefinition.agent.DeclarativeAgentDescriptor;
 import org.jenkinsci.plugins.pipeline.modeldefinition.options.DeclarativeOptionDescriptor;
 import org.jenkinsci.plugins.pipeline.modeldefinition.when.DeclarativeStageConditionalDescriptor;
@@ -34,7 +35,7 @@ public class DeclarativeSteps {
     private static final List<String> blockedOptionSteps = Arrays.asList("node", "stage", "withEnv", "script", "withCredentials");
     private static final List<Class<?>> blockedOptionStepContexts = Arrays.asList(Launcher.class, FilePath.class, Computer.class);
 
-    public void generateDeclarativeAscii(String declarativeDest, HyperLocalPluginManger pluginManager) {
+    public void generateDeclarativeAscii(String declarativeDest, HyperLocalPluginManager pluginManager) {
         File declDest;
         if (declarativeDest != null) {
             declDest = new File(declarativeDest);
@@ -70,7 +71,7 @@ public class DeclarativeSteps {
     private Map<String, List<Descriptor>> processDescriptors(@NonNull Class<? extends Descriptor> c,
                                                              @NonNull Map<String, List<Descriptor>> descMap,
                                                              @CheckForNull Predicate<Descriptor> filter, 
-                                                             HyperLocalPluginManger pluginManager) {
+                                                             HyperLocalPluginManager pluginManager) {
         // If no filter was specified, default to true.
         if (filter == null) {
             filter = (d) -> true;

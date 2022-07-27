@@ -77,6 +77,11 @@
       <version>2.33</version>
     </dependency>
     <dependency>
+      <groupId>org.jenkins-ci.infra</groupId>
+      <artifactId>pipeline-metadata-utils</artifactId>
+      <version>1.4</version>
+    </dependency>
+    <dependency>
       <groupId>org.jenkins-ci.plugins.workflow</groupId>
       <artifactId>workflow-step-api</artifactId>
     </dependency>
