@@ -1,17 +1,22 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <artifactId>pipeline-steps-doc-generator</artifactId>
+
+  <parent>
+    <groupId>org.jenkins-ci</groupId>
+    <artifactId>jenkins</artifactId>
+    <version>1.84</version>
+  </parent>
+
   <groupId>org.jenkins-ci</groupId>
+  <artifactId>pipeline-steps-doc-generator</artifactId>
   <version>1.0-SNAPSHOT</version>
   <name>Pipeline Steps Doc Generator Indexer</name>
   <description>List up extension points and their implementations.</description>
-  <properties>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
 
-    <maven.compiler.testSource>1.8</maven.compiler.testSource>
-    <maven.compiler.testTarget>1.8</maven.compiler.testTarget>
+  <properties>
+    <gitHubRepo>jenkins-infra/pipeline-steps-doc-generator</gitHubRepo>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <spotbugs.excludeFilterFile>${project.basedir}/src/spotbugs/spotbugs-excludes.xml</spotbugs.excludeFilterFile>
   </properties>
 
   <build>
@@ -72,6 +77,11 @@
 
   <dependencies>
     <dependency>
+      <groupId>org.jenkins-ci.main</groupId>
+      <artifactId>jenkins-core</artifactId>
+      <version>2.362</version> <!-- weekly release for latest API's -->
+    </dependency>
+    <dependency>
       <groupId>args4j</groupId>
       <artifactId>args4j</artifactId>
       <version>2.33</version>
@@ -89,11 +99,6 @@
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
       <version>2.11.0</version>
-    </dependency>
-    <dependency>
-      <groupId>org.jenkins-ci.main</groupId>
-      <artifactId>jenkins-core</artifactId>
-      <version>2.362</version> <!-- weekly release for latest API's -->
     </dependency>
     <dependency>
       <groupId>javax.servlet</groupId>
@@ -129,7 +134,6 @@
       <version>4.13.2</version>
       <scope>test</scope>
     </dependency>
-
   </dependencies>
 
   <repositories>
@@ -147,7 +151,9 @@
   </pluginRepositories>
 
   <scm>
-    <connection>scm:git:git://github.com/jenkins-infra/pipeline-plugin-doc-generator.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/jenkinsci/backend-extension-indexer.git</developerConnection>
+    <connection>scm:git:https://github.com/${gitHubRepo}.git</connection>
+    <developerConnection>scm:git:git@github.com:${gitHubRepo}.git</developerConnection>
+    <url>https://github.com/${gitHubRepo}.git</url>
+    <tag>${scmTag}</tag>
   </scm>
 </project>
