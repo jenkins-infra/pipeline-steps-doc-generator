@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<FindBugsFilter>
+  <!--
+    Here lies technical debt. Exclusions in this section have not yet been triaged. When working on
+    on this section, pick an exclusion to triage, then:
+    - If it is a false positive, add a @SuppressFBWarnings(value = "[…]", justification = "[…]")
+      annotation indicating the reason why it is a false positive, then remove the exclusion from
+      this section.
+    - If it is not a false positive, fix the bug, then remove the exclusion from this section.
+  -->
+  <Match>
+    <Or>
+      <Bug pattern="PATH_TRAVERSAL_IN"/>
+      <Bug pattern="RV_RETURN_VALUE_IGNORED_BAD_PRACTICE"/>
+      <Bug pattern="WMI_WRONG_MAP_ITERATOR"/>
+      <Bug pattern="REC_CATCH_EXCEPTION"/>
+      <Bug pattern="MS_PKGPROTECT"/>
+      <Bug pattern="DM_DEFAULT_ENCODING"/>
+      <Bug pattern="EI_EXPOSE_REP2"/>
+    </Or>
+  </Match>
+</FindBugsFilter>

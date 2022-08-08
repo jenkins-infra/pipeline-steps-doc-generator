@@ -16,6 +16,7 @@
   <properties>
     <gitHubRepo>jenkins-infra/pipeline-steps-doc-generator</gitHubRepo>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <spotbugs.excludeFilterFile>${project.basedir}/src/spotbugs/spotbugs-excludes.xml</spotbugs.excludeFilterFile>
   </properties>
 
   <build>
