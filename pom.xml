@@ -79,7 +79,7 @@
     <dependency>
       <groupId>org.jenkins-ci.main</groupId>
       <artifactId>jenkins-core</artifactId>
-      <version>2.362</version> <!-- weekly release for latest API's -->
+      <version>2.363</version> <!-- weekly release for latest API's -->
     </dependency>
     <dependency>
       <groupId>args4j</groupId>
