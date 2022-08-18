@@ -1,3 +1,2 @@
 $class: 'GitSCM'
-perforce
 $class: 'MultiSCM'
