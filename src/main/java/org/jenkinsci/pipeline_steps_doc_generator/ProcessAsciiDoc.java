@@ -20,6 +20,52 @@ public class ProcessAsciiDoc {
                 .append("\n++++\n");
     }
 
+    public String separateParam(String param, String allAscii, File child)
+            throws IOException, RuntimeException {
+        BufferedReader br = new BufferedReader(new FileReader(child));
+        String line;
+        int counter = 0;
+        boolean flag = false;
+        int lines = 0;
+        String url = param.toLowerCase().replaceAll("class", "").replaceAll("[^a-zA-Z0-9]", "");
+        Path adocPath = Path.of(allAscii + "/params/" + url + ".adoc");
+        StringBuilder newAdoc = new StringBuilder();
+        StringBuilder duplicate = new StringBuilder();
+        generateHeader(newAdoc, param);
+
+        while ((line = br.readLine()) != null) {
+            if (!flag && line.contains("<li><code>" + param + "</code><div>")) {
+                flag = true;
+                duplicate.append("<li><span><a href=\"/doc/pipeline/steps/params/" + url
+                        + "\" target=\"_blank\"><code>" + param + "</code></a></span></li>\n");
+            } else if (!flag) {
+                duplicate.append(line).append("\n");
+            }
+            if (flag) {
+                counter += (line.split("<li>", -1).length - line.split("</li>", -1).length);
+                lines++;
+                if (newAdoc != null)
+                    newAdoc.append(line).append("\n");
+                if (counter == 0) {
+                    if (newAdoc != null) {
+                        if (lines < 500) {
+                            br.close();
+                            throw new RuntimeException("Invalid Configuration, " + param
+                                    + " does not have sufficient documentation to be separated!");
+                        }
+                        newAdoc.append("\n\n++++");
+                        Files.writeString(adocPath, newAdoc.toString());
+                        newAdoc = null;
+                    }
+                    lines = 0;
+                    flag = false;
+                }
+            }
+        }
+        br.close();
+        return duplicate.toString();
+    }
+
     public void processDocs(String allAscii) {
         File dir = new File(allAscii);
         File[] directoryListing = dir.listFiles();
@@ -30,54 +76,13 @@ public class ProcessAsciiDoc {
                     for (File child : directoryListing) {
                         String type = FilenameUtils.getExtension(child.getName());
                         if (type.equals("adoc")) {
-                            BufferedReader br = new BufferedReader(new FileReader(child));
-                            String line;
-                            int counter = 0;
-                            boolean flag = false;
-                            int lines = 0;
-                            String url = param.toLowerCase().replaceAll("class", "").replaceAll("[^a-zA-Z0-9]", "");
-                            Path adocPath = Path.of(allAscii + "/params/" + url + ".adoc");
                             Path currentPath = Path.of(child.getPath());
-                            StringBuilder newAdoc = new StringBuilder();
-                            StringBuilder duplicate = new StringBuilder();
-                            generateHeader(newAdoc, param);
-
-                            while ((line = br.readLine()) != null) {
-                                if (!flag && line.contains("<li><code>" + param + "</code><div>")) {
-                                    flag = true;
-                                    duplicate.append("<li><span><a href=\"/doc/pipeline/steps/params/" + url
-                                            + "\" target=\"_blank\"><code>" + param + "</code></a></span></li>\n");
-                                } else if (!flag) {
-                                    duplicate.append(line).append("\n");
-                                }
-                                if (flag) {
-                                    counter += (line.split("<li>", -1).length - line.split("</li>", -1).length);
-                                    lines++;
-                                    if (newAdoc != null)
-                                        newAdoc.append(line).append("\n");
-                                    if (counter == 0) {
-                                        if (newAdoc != null) {
-                                            if (lines < 500) {
-                                                br.close();
-                                                throw new RuntimeException("Invalid Configuration, " + param
-                                                        + " does not have sufficient documentation to be separated!");
-                                            }
-                                            newAdoc.append("\n\n++++");
-                                            Files.writeString(adocPath, newAdoc.toString());
-                                            newAdoc = null;
-                                        }
-                                        lines = 0;
-                                        flag = false;
-                                    }
-                                }
-                            }
-                            br.close();
-                            Files.writeString(currentPath, duplicate);
+                            Files.writeString(currentPath, separateParam(param, allAscii, child));
                         }
                     }
                 }
             }
-        } catch (IOException ex) {
+        } catch (IOException | RuntimeException ex) {
             ex.printStackTrace();
         }
     }
