@@ -20,17 +20,20 @@ public class ProcessAsciiDoc {
                 .append("\n++++\n");
     }
 
+    /*
+     * Takes in param name, and separates its documentation on to a new file.
+     */
     public String separateParam(String param, String allAscii, File child)
             throws IOException, RuntimeException {
         BufferedReader br = new BufferedReader(new FileReader(child));
         String line;
-        int counter = 0;
+        int counter = 0; // keeps a count of opening and closing li tags to mark the end of a section
         boolean flag = false;
         int lines = 0;
         String url = param.toLowerCase().replaceAll("class", "").replaceAll("[^a-zA-Z0-9]", "");
-        Path adocPath = Path.of(allAscii + "/params/" + url + ".adoc");
-        StringBuilder newAdoc = new StringBuilder();
-        StringBuilder duplicate = new StringBuilder();
+        Path adocPath = Path.of(allAscii + "/params/" + url + ".adoc"); // points to the params folder that will contain the separated files
+        StringBuilder newAdoc = new StringBuilder(); // new file that contains only the parameter details
+        StringBuilder duplicate = new StringBuilder(); // contains the content of the current file minus the parameter details
         generateHeader(newAdoc, param);
 
         while ((line = br.readLine()) != null) {
@@ -52,6 +55,7 @@ public class ProcessAsciiDoc {
                             br.close();
                             throw new RuntimeException("Invalid Configuration, " + param
                                     + " does not have sufficient documentation to be separated!");
+                            // halt the program if any of the configured parameters does not contain sufficient documentation
                         }
                         newAdoc.append("\n\n++++");
                         Files.writeString(adocPath, newAdoc.toString());
