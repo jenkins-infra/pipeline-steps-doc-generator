@@ -116,7 +116,7 @@ You can then browse to [Pipeline Steps Reference](http://localhost:4242/doc/pipe
 
 ### 6. Configure Parameters
 
-The parameters that need to be separated to new pages can be entered in `config.txt` by adhering to the following rules.
+The parameters that need to be separated to new pages can be entered in `config.txt` by adhering to the following rules. This feature reduces the content on longer pages, thus increasing the loading speed of these pages.
 
 * Ensure that a specified parameter's documentation is the same everywhere it occurs in the Pipeline Steps Reference. For example, `perforce` contains different documentation under the checkout step's scm parameter and the scanForIssues step's tool parameter. Hence, it can not be included in the configuration file.
 
