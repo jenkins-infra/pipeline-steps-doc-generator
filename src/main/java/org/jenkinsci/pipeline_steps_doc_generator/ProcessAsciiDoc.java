@@ -30,8 +30,7 @@ public class ProcessAsciiDoc {
      * Takes in a Pipeline step parameter's class name, and separates its
      * documentation on to a new file.
      */
-
-    public String separateClass(String className, String allAscii, File child)
+    public String separateClass(String className, String allAscii, File child, int linesThreshold)
             throws IOException, RuntimeException {
         BufferedReader br = new BufferedReader(new FileReader(child));
         StringBuilder duplicate = new StringBuilder(); // contains the content of the current file minus the parameter
@@ -61,7 +60,7 @@ public class ProcessAsciiDoc {
                         newAdoc.append(line).append("\n");
                     if (counter == 0) {
                         if (newAdoc != null) {
-                            if (lines < 500) {
+                            if (lines < linesThreshold) {
                                 throw new RuntimeException("Invalid Configuration, " + className
                                         + " does not have sufficient documentation to be separated!");
                                 // halt the program if any of the configured parameters does not contain
@@ -85,11 +84,13 @@ public class ProcessAsciiDoc {
     }
 
     /**
+     * Note that the method exits when the configuration file does not follow the suggested conventions.
+     * Please refer to the README while troubleshooting.
      * @param allAscii path to the directory containing all the AsciiDocs.
      * @throws RuntimeException thrown if a configured class lacks sufficient documentation.
      * @throws IOException
      */
-    public void processDocs(String allAscii) {
+    public void processDocs(String allAscii, int linesThreshold) {
         File dir = new File(allAscii);
         File[] directoryListing = dir.listFiles();
         try {
@@ -100,7 +101,7 @@ public class ProcessAsciiDoc {
                         String type = FilenameUtils.getExtension(child.getName());
                         if (type.equals("adoc")) {
                             Path currentPath = Path.of(child.getPath());
-                            Files.writeString(currentPath, separateClass(className, allAscii, child));
+                            Files.writeString(currentPath, separateClass(className, allAscii, child, linesThreshold));
                         }
                     }
                 }

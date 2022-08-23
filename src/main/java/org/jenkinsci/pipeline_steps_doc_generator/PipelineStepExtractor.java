@@ -260,7 +260,7 @@ public class PipelineStepExtractor {
             }
         }
         ProcessAsciiDoc pad = new ProcessAsciiDoc();
-        pad.processDocs(allAsciiPath);
+        pad.processDocs(allAsciiPath, 500);
     }
 
     public void generateDeclarativeSteps() {

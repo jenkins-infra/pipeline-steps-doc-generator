@@ -17,7 +17,7 @@ public class ProcessAsciiDocTest {
         ProcessAsciiDoc pad = new ProcessAsciiDoc();
         File child = directoryListing[0];
         try {
-            pad.separateClass("$class: 'PvcsScm'", allAscii, child);
+            pad.separateClass("$class: 'PvcsScm'", allAscii, child, 500);
             assertTrue(false);
         } catch (RuntimeException ex) {
             assertTrue(true);
@@ -31,7 +31,7 @@ public class ProcessAsciiDocTest {
         ProcessAsciiDoc pad = new ProcessAsciiDoc();
         File child = directoryListing[0];
         try {
-            pad.separateClass("$class: 'GitSCM'", allAscii, child);
+            pad.separateClass("$class: 'GitSCM'", allAscii, child, 500);
             File file = new File("src/test/resources/input/params/gitscm.adoc");
             assertTrue(file.exists());
             file.delete();
