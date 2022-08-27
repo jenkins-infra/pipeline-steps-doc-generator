@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.logging.Logger;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -18,6 +19,8 @@ import org.apache.commons.io.FilenameUtils;
  * global document of the class that all Pipeline steps can refer to.
  */
 public class ProcessAsciiDoc {
+
+    private static final Logger LOG = Logger.getLogger(ProcessAsciiDoc.class.getName());
 
     public void generateHeader(StringBuilder toWrite, String className) {
         toWrite.append("---\nlayout: pipelinesteps\ntitle: \"").append(className)
@@ -84,18 +87,27 @@ public class ProcessAsciiDoc {
     }
 
     /**
-     * Note that the method exits when the configuration file does not follow the suggested conventions.
+     * Note that the method exits when the configuration file does not follow the
+     * suggested conventions.
      * Please refer to the README while troubleshooting.
+     * 
      * @param allAscii path to the directory containing all the AsciiDocs.
-     * @throws RuntimeException thrown if a configured class lacks sufficient documentation.
+     * @throws RuntimeException thrown if a configured class lacks sufficient
+     *                          documentation.
      * @throws IOException
      */
     public void processDocs(String allAscii, int linesThreshold) {
         File dir = new File(allAscii);
         File[] directoryListing = dir.listFiles();
+        LOG.info("processing the generated asciidocs...");
         try {
             List<String> config = Files.readAllLines(Paths.get("config.txt"));
             for (String className : config) {
+                className = className.trim();
+                if (className.startsWith("--") || className.isBlank()) {
+                    continue;
+                }
+                LOG.info("Iterating through parameter class name: " + className);
                 if (directoryListing != null) {
                     for (File child : directoryListing) {
                         String type = FilenameUtils.getExtension(child.getName());
