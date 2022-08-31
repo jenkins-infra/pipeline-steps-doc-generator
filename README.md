@@ -122,4 +122,4 @@ The parameters that need to be separated to new pages can be entered in `config.
 
 * Maintain the order of the parameters such that if one parameter occurs inside the nesting of another, it is written above the other in the configuration file. For example, `$class: 'GitSCM'` is present inside `$class: MultiSCM` in checkout step, hence, it must be written above in the configuration file.
 
-* A parameter must have atleast 100 lines of asciidoc code present in the location from which it is supposed to be removed.
+* A parameter must have at least 100 lines of asciidoc code present in the location from which it is supposed to be removed.
