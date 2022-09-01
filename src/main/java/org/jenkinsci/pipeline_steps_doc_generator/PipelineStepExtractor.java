@@ -21,8 +21,8 @@ import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
-import org.jenkinsci.infra.tools.HyperLocalPluginManager;
 import org.apache.commons.io.IOUtils;
+import org.jenkinsci.infra.tools.HyperLocalPluginManager;
 import org.jenkinsci.plugins.structs.describable.DescribableModel;
 import org.jenkinsci.plugins.structs.describable.DescribableParameter;
 import org.jenkinsci.plugins.structs.describable.HeterogeneousObjectType;
@@ -259,6 +259,9 @@ public class PipelineStepExtractor {
                 //continue to next plugin
             }
         }
+        ProcessAsciiDoc pad = new ProcessAsciiDoc();
+        new File(allAsciiPath + "/params").mkdirs();
+        pad.processDocs(allAsciiPath, 100);
     }
 
     public void generateDeclarativeSteps() {
