@@ -51,8 +51,8 @@ public class ProcessAsciiDoc {
             while ((line = br.readLine()) != null) {
                 if (!flag && line.contains("<li><code>" + className + "</code><div>")) {
                     flag = true;
-                    duplicate.append("<li><span><a href=\"/doc/pipeline/steps/params/" + url
-                            + "\" target=\"_blank\"><code>" + className + "</code></a></span></li>\n");
+                    duplicate.append("<li><span><a href=\"/doc/pipeline/steps/params/" + url + "\"><code>" + className
+                            + "</code></a></span></li>\n");
                 } else if (!flag) {
                     duplicate.append(line).append("\n");
                 }
