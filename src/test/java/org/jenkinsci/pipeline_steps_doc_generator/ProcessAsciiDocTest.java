@@ -69,7 +69,7 @@ public class ProcessAsciiDocTest {
                 }
             }
             assertEquals(
-                    "<li><span><a href=\"/doc/pipeline/steps/params/gitscm\" target=\"_blank\"><code>$class: 'GitSCM'</code></a></span></li>",
+                    "<li><span><a href=\"/doc/pipeline/steps/params/gitscm\"><code>$class: 'GitSCM'</code></a></span></li>",
                     link);
         } catch (RuntimeException | IOException ex) {
             assertTrue(false);
