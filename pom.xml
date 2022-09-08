@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
@@ -5,17 +6,19 @@
     <groupId>org.jenkins-ci</groupId>
     <artifactId>jenkins</artifactId>
     <version>1.87</version>
+    <relativePath />
   </parent>
 
   <groupId>org.jenkins-ci</groupId>
   <artifactId>pipeline-steps-doc-generator</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>${revision}${changelist}</version>
   <name>Pipeline Steps Doc Generator Indexer</name>
   <description>List up extension points and their implementations.</description>
 
   <properties>
-    <gitHubRepo>jenkins-infra/pipeline-steps-doc-generator</gitHubRepo>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <revision>1.0</revision>
+    <changelist>-SNAPSHOT</changelist>
+    <gitHubRepo>jenkins-infra/${project.artifactId}</gitHubRepo>
     <spotbugs.excludeFilterFile>${project.basedir}/src/spotbugs/spotbugs-excludes.xml</spotbugs.excludeFilterFile>
   </properties>
 
@@ -23,7 +26,6 @@
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.10.1</version>
         <configuration>
           <compilerArgs>
             <arg>-Xlint:deprecation</arg>
@@ -41,15 +43,17 @@
             </manifest>
           </archive>
         </configuration>
-        <version>3.2.2</version>
       </plugin>
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <executions>
           <execution>
+            <!-- this is used for inheritance merges -->
+            <id>make-assembly</id>
             <goals>
-              <goal>attached</goal>
+              <goal>single</goal>
             </goals>
+            <!-- bind to the packaging phase -->
             <phase>package</phase>
             <configuration>
               <descriptors>
@@ -58,7 +62,6 @@
             </configuration>
           </execution>
         </executions>
-        <version>2.6</version>
       </plugin>
     </plugins>
   </build>
