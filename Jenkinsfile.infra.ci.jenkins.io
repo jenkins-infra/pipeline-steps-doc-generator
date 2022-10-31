@@ -53,8 +53,11 @@ pipeline {
         stage('Publish') {
             steps {
                 dir('docFolder') {
-                    zip dir: './allAscii', glob: '', zipFile: 'allAscii.zip'
-                    zip dir: './declarative', glob: '', zipFile: 'declarative.zip'
+                    // allAscii and declarative must not include directory name in their zip files
+                    sh  '''
+                        ( cd allAscii    && zip -r -1 -q ../allAscii.zip    . )
+                        ( cd declarative && zip -r -1 -q ../declarative.zip . )
+                        '''
                     script {
                         if (env.BRANCH_IS_PRIMARY) {
                             infra.publishReports(['allAscii.zip', 'declarative.zip'])
