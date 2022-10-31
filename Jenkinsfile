@@ -52,8 +52,8 @@ pipeline {
         stage('Clean up') {
             steps {
                 dir('docFolder') {
-                    zip dir: './allAscii', glob: '', zipFile: 'allAscii.zip'
-                    zip dir: './declarative', glob: '', zipFile: 'declarative.zip'
+                    sh 'zip -r allAscii.zip ./allAscii'
+                    sh 'zip -r declarative.zip ./declarative'
                     archiveArtifacts artifacts: 'allAscii.zip,declarative.zip', fingerprint: true
                 }
             }
