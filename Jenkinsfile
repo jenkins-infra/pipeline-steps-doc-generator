@@ -52,8 +52,11 @@ pipeline {
         stage('Clean up') {
             steps {
                 dir('docFolder') {
-                    sh 'zip -r allAscii.zip ./allAscii'
-                    sh 'zip -r declarative.zip ./declarative'
+                    // allAscii and declarative must not include directory name in their zip files
+                    sh  '''
+                        ( cd allAscii    && zip -r -1 -q ../allAscii.zip    . )
+                        ( cd declarative && zip -r -1 -q ../declarative.zip . )
+                        '''
                     archiveArtifacts artifacts: 'allAscii.zip,declarative.zip', fingerprint: true
                 }
             }
