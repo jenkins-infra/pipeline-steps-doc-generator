@@ -2,6 +2,8 @@
 
 This project generates the documentation for pipeline jobs.
 
+Please note that a minimum of 8Gb of memory is required to build this project.
+
 ## Development
 
 In order to install and run the project on your local machine, a rough outline of the steps is provided below.
