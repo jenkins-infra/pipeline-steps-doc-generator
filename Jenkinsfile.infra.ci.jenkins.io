@@ -2,7 +2,7 @@
 
 pipeline {
     // This build requires at least 8Gb of memory
-    agent { label 'linux-amd64-big' }
+    agent { label 'linux-amd64-big || highmem' }
     triggers {
         cron('H H * * 0')
     }
@@ -50,7 +50,7 @@ pipeline {
             }
         }
 
-        stage('Publish') {
+        stage('Publish and Clean up') {
             steps {
                 dir('docFolder') {
                     // allAscii and declarative must not include directory name in their zip files
@@ -59,10 +59,10 @@ pipeline {
                         ( cd declarative && zip -r -1 -q ../declarative.zip . )
                         '''
                     script {
-                        if (env.BRANCH_IS_PRIMARY) {
+                        if (env.BRANCH_IS_PRIMARY && infra.isInfra()) {
                             infra.publishReports(['allAscii.zip', 'declarative.zip'])
                         } else {
-                            // On branches and PR, archive the files
+                            // On branches and PR or not infra, archive the files
                             archiveArtifacts artifacts: 'allAscii.zip,declarative.zip', fingerprint: true
                         }
                     }
