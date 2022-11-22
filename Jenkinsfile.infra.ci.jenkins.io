@@ -2,7 +2,7 @@
 
 pipeline {
     // This build requires at least 8Gb of memory
-    agent { label 'linux-amd64-big || highmem' }
+    agent { label 'linux-amd64-big' }
     triggers {
         cron('H H * * 0')
     }
