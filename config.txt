@@ -5,6 +5,7 @@
 $class: 'CCUCMScm'
 $class: 'CVSSCM'
 $class: 'CvsProjectset'
+scmGit
 $class: 'GitSCM'
 $class: 'MercurialSCM'
 $class: 'RTCScm'
