@@ -27,7 +27,9 @@ pipeline {
                             poll: false,
                             url:'https://github.com/jenkinsci/backend-extension-indexer.git',
                         branch: 'master'
-                    sh 'mvn -s ../settings.xml --no-transfer-progress clean install -DskipTests'
+                    script {
+                        infra.runMaven(['clean', 'install', '-DskipTests'], 11)
+                    }
                 }
             }
         }
@@ -44,7 +46,9 @@ pipeline {
             steps {
                 dir('docFolder') {
                     checkout scm
-                    sh 'mvn -s ../settings.xml --no-transfer-progress clean install -DskipTests'
+                    script {
+                        infra.runMaven(['clean', 'install', '-DskipTests'], 11)
+                    }
                     sh 'mv ../plugins . && java -verbose:gc -XshowSettings:vm -jar ./target/*-bin/pipeline-steps-doc-generator*.jar'
                 }
             }
