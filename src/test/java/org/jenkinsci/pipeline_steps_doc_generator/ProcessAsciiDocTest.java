@@ -5,7 +5,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
-
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 
@@ -58,7 +57,8 @@ public class ProcessAsciiDocTest {
     public void isHyperlinkReplacedCorrectly() {
         ProcessAsciiDoc pad = new ProcessAsciiDoc();
         try {
-            String[] lines = pad.separateClass("$class: 'GitSCM'", allAscii, child, 500).split("\n");
+            String[] lines =
+                    pad.separateClass("$class: 'GitSCM'", allAscii, child, 500).split("\n");
             String link = "";
             File file = new File("src/test/resources/input/params/gitscm.adoc");
             file.delete();
