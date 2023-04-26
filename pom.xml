@@ -26,7 +26,6 @@
     <revision>1.0</revision>
     <changelist>-SNAPSHOT</changelist>
     <gitHubRepo>jenkins-infra/${project.artifactId}</gitHubRepo>
-    <spotbugs.excludeFilterFile>${project.basedir}/src/spotbugs/spotbugs-excludes.xml</spotbugs.excludeFilterFile>
     <spotless.check.skip>false</spotless.check.skip>
   </properties>
 
