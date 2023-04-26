@@ -1,8 +1,7 @@
 package org.jenkinsci.pipeline_steps_doc_generator;
 
-import org.kohsuke.stapler.DataBoundConstructor;
-
 import java.util.HashMap;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 class DescribeMe {
     @DataBoundConstructor

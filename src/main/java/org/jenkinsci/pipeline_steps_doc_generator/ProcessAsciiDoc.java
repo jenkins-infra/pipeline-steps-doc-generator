@@ -9,7 +9,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.logging.Logger;
-
 import org.apache.commons.io.FilenameUtils;
 
 /**
@@ -23,7 +22,8 @@ public class ProcessAsciiDoc {
     private static final Logger LOG = Logger.getLogger(ProcessAsciiDoc.class.getName());
 
     public void generateHeader(StringBuilder toWrite, String className) {
-        toWrite.append("---\nlayout: pipelinesteps\ntitle: \"").append(className)
+        toWrite.append("---\nlayout: pipelinesteps\ntitle: \"")
+                .append(className)
                 .append("\"\n---\n")
                 .append("== " + className + "\n")
                 .append("\n++++\n");
@@ -37,14 +37,14 @@ public class ProcessAsciiDoc {
             throws IOException, RuntimeException {
         BufferedReader br = new BufferedReader(new FileReader(child));
         StringBuilder duplicate = new StringBuilder(); // contains the content of the current file minus the parameter
-                                                       // details
+        // details
         String line;
         int counter = 0; // keeps a count of opening and closing li tags to mark the end of a section
         boolean flag = false;
         int lines = 0;
         String url = className.toLowerCase().replaceAll("class", "").replaceAll("[^a-zA-Z0-9]", "");
         Path adocPath = Path.of(allAscii + "/params/" + url + ".adoc"); // points to the params folder that will contain
-                                                                        // the separated files
+        // the separated files
         StringBuilder newAdoc = new StringBuilder(); // new file that contains only the parameter details
         generateHeader(newAdoc, className);
         try {
@@ -59,8 +59,7 @@ public class ProcessAsciiDoc {
                 if (flag) {
                     counter += (line.split("<li>", -1).length - line.split("</li>", -1).length);
                     lines++;
-                    if (newAdoc != null)
-                        newAdoc.append(line).append("\n");
+                    if (newAdoc != null) newAdoc.append(line).append("\n");
                     if (counter == 0) {
                         if (newAdoc != null) {
                             if (lines < linesThreshold) {
@@ -90,7 +89,7 @@ public class ProcessAsciiDoc {
      * Note that the method exits when the configuration file does not follow the
      * suggested conventions.
      * Please refer to the README while troubleshooting.
-     * 
+     *
      * @param allAscii path to the directory containing all the AsciiDocs.
      * @throws RuntimeException thrown if a configured class lacks sufficient
      *                          documentation.
