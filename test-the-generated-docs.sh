@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 # Test that the generated documentation is good enough for production use
 # Tests are intentionally lightweight, focused on detecting known issues
@@ -14,6 +14,7 @@ if [ ! -f $file ]; then
         exit 125 # Exit code 125 tells git bisect to skip this commit
 fi
 
+# This is Linux specific
 SCM_STEP_SIZE=$(stat -c%s $file)
 if (( SCM_STEP_SIZE < 75000 )); then
         echo "$file size is ${SCM_STEP_SIZE}, expected at least 75000 bytes"
