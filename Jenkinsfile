@@ -49,7 +49,7 @@ pipeline {
                     script {
                         infra.runMaven(['clean', 'install', '-DskipTests'], 11)
                     }
-                    sh 'mv ../plugins . && java -verbose:gc -XshowSettings:vm -jar ./target/*-bin/pipeline-steps-doc-generator*.jar'
+                    sh 'mv ../plugins . && java -XshowSettings:vm -jar ./target/*-bin/pipeline-steps-doc-generator*.jar'
                 }
             }
         }
