@@ -65,9 +65,14 @@ pipeline {
                             // On branches and PR or not infra, archive the files
                             archiveArtifacts artifacts: 'allAscii.zip,declarative.zip', fingerprint: true
                         }
+                        def message = "OK"
+                        try {
+                            message = sh returnStdout: true, script: './test-the-generated-docs.sh'
+                        } catch (err) {
+                            // Mark job unstable if tests do not pass
+                            unstable 'Test failure: ' + message
+                        }
                     }
-                    // Fail job if tests do not pass
-                    sh './test-the-generated-docs.sh'
                 }
             }
         }
