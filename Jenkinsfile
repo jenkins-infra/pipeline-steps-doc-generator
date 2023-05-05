@@ -2,7 +2,9 @@
 
 pipeline {
     // This build requires at least 8Gb of memory
-    agent { label 'linux-amd64' }
+    agent {
+        label 'linux-amd64'
+    }
     triggers {
         cron('H H * * 0')
     }
@@ -10,6 +12,7 @@ pipeline {
     options {
         timestamps()
         timeout(time: 1, unit: 'HOURS')
+        skipDefaultCheckout true
     }
 
     stages {
@@ -20,7 +23,7 @@ pipeline {
             }
         }
 
-        stage('Prepare Indexer') {
+        stage('Indexer') {
             steps {
                 dir('pluginFolder') {
                     git changelog: false,
@@ -30,19 +33,12 @@ pipeline {
                     script {
                         infra.runMaven(['clean', 'install', '-DskipTests'], 11)
                     }
+                    sh 'java -XshowSettings:vm -jar ./target/*-bin/extension-indexer*.jar -plugins ./plugins && mv plugins ..'
                 }
             }
         }
 
-        stage('Run Indexer') {
-            steps {
-                dir('pluginFolder') {
-                    sh 'java -verbose:gc -XshowSettings:vm -jar ./target/*-bin/extension-indexer*.jar -plugins ./plugins && mv plugins ..'
-                }
-            }
-        }
-
-        stage('Generate Documentation') {
+        stage('Generator') {
             steps {
                 dir('docFolder') {
                     checkout scm
@@ -54,7 +50,7 @@ pipeline {
             }
         }
 
-        stage('Publish and Clean up') {
+        stage('Publisher') {
             steps {
                 dir('docFolder') {
                     // allAscii and declarative must not include directory name in their zip files
