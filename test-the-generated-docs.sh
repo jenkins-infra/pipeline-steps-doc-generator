@@ -5,7 +5,7 @@
 #
 # Script exits with non-zero exit code if any test fails
 
-file=docFolder/allAscii/workflow-scm-step.adoc
+file=allAscii/workflow-scm-step.adoc
 
 echo "======== Check workflow scm step file size - $file"
 
