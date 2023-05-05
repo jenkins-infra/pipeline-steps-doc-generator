@@ -37,7 +37,7 @@ pipeline {
         stage('Run Indexer') {
             steps {
                 dir('pluginFolder') {
-                    sh 'java -verbose:gc -XshowSettings:vm -jar ./target/*-bin/extension-indexer*.jar -plugins ./plugins && mv plugins ..'
+                    sh 'java -XshowSettings:vm -jar ./target/*-bin/extension-indexer*.jar -plugins ./plugins && mv plugins ..'
                 }
             }
         }
@@ -49,7 +49,7 @@ pipeline {
                     script {
                         infra.runMaven(['clean', 'install', '-DskipTests'], 11)
                     }
-                    sh 'mv ../plugins . && java -verbose:gc -XshowSettings:vm -jar ./target/*-bin/pipeline-steps-doc-generator*.jar'
+                    sh 'mv ../plugins . && java -XshowSettings:vm -jar ./target/*-bin/pipeline-steps-doc-generator*.jar'
                 }
             }
         }
@@ -70,6 +70,8 @@ pipeline {
                             archiveArtifacts artifacts: 'allAscii.zip,declarative.zip', fingerprint: true
                         }
                     }
+                    // Fail job if tests do not pass
+                    sh './test-the-generated-docs.sh'
                 }
             }
         }
