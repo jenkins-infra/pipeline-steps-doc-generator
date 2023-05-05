@@ -54,12 +54,6 @@ pipeline {
             }
         }
 
-        stage('Test') {
-            steps {
-                sh 'test-the-generated-docs.sh' // Fails job if tests do not pass
-            }
-        }
-
         stage('Publish and Clean up') {
             steps {
                 dir('docFolder') {
@@ -76,6 +70,8 @@ pipeline {
                             archiveArtifacts artifacts: 'allAscii.zip,declarative.zip', fingerprint: true
                         }
                     }
+                    // Fail job if tests do not pass
+                    sh './test-the-generated-docs.sh'
                 }
             }
         }
