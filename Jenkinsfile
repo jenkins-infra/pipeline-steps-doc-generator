@@ -37,7 +37,7 @@ pipeline {
         stage('Run Indexer') {
             steps {
                 dir('pluginFolder') {
-                    sh 'java -verbose:gc -XshowSettings:vm -jar ./target/*-bin/extension-indexer*.jar -plugins ./plugins && mv plugins ..'
+                    sh 'java -XshowSettings:vm -jar ./target/*-bin/extension-indexer*.jar -plugins ./plugins && mv plugins ..'
                 }
             }
         }
