@@ -54,6 +54,12 @@ pipeline {
             }
         }
 
+        stage('Test') {
+            steps {
+                sh 'test-the-generated-docs.sh' // Fails job if tests do not pass
+            }
+        }
+
         stage('Publish and Clean up') {
             steps {
                 dir('docFolder') {
