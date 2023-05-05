@@ -28,7 +28,6 @@ $class: 'RunSelectorParameter'
 $class: 'BacklogPullRequestSCMSource'
 multiBranch
 dagshubScmSource
-gitblit
 git
 $class: 'GiteaSCMSource'
 multiGraph
