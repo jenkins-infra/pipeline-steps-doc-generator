@@ -65,11 +65,17 @@ pipeline {
                             // On branches and PR or not infra, archive the files
                             archiveArtifacts artifacts: 'allAscii.zip,declarative.zip', fingerprint: true
                         }
-                        try {
-                            sh './test-the-generated-docs.sh'
-                        } catch (err) {
-                            // Mark job unstable if tests do not pass
-                            unstable 'Test failed, see preceding lines of output'
+                        def result = sh returnStatus: true, script: './test-the-generated-docs.sh'
+                        if (result != 0) {
+                            if (result < 125) {
+                                def message = "Test failed: error code ${result}"
+                                currentBuild.description = message
+                                unstable message
+                            } else {
+                                // Error code 125 is used by git bisect to skip a commit
+                                // Test script returns 125 in case of unexpected exit
+                                error "Build failed with error ${result}"
+                            }
                         }
                     }
                 }
