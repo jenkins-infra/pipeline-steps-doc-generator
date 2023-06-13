@@ -1,8 +1,8 @@
 package org.jenkinsci.pipeline_steps_doc_generator;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,7 +14,7 @@ public class ProcessAsciiDocTest {
     File child = new File(allAscii + "/workflow-scm.adoc");
 
     @Test
-    public void testSeparateClassThrowsException() {
+    public void isExceptionThrown() {
         ProcessAsciiDoc pad = new ProcessAsciiDoc();
         assertThrows(RuntimeException.class, () -> {
             pad.separateClass("$class: 'PvcsScm'", allAscii, child, 500);
@@ -22,7 +22,7 @@ public class ProcessAsciiDocTest {
     }
 
     @Test
-    public void testNewAdocCreated() {
+    public void isNewAdocCreated() {
         ProcessAsciiDoc pad = new ProcessAsciiDoc();
         try {
             pad.separateClass("$class: 'GitSCM'", allAscii, child, 500);
@@ -36,7 +36,7 @@ public class ProcessAsciiDocTest {
     }
 
     @Test
-    public void testSeparatedContentCorrect() {
+    public void isSeparatedContentCorrect() {
         ProcessAsciiDoc pad = new ProcessAsciiDoc();
         try {
             pad.separateClass("$class: 'GitSCM'", allAscii, child, 500);
@@ -50,7 +50,7 @@ public class ProcessAsciiDocTest {
     }
 
     @Test
-    public void testHyperlinkReplacedCorrectly() {
+    public void isHyperlinkReplacedCorrectly() {
         ProcessAsciiDoc pad = new ProcessAsciiDoc();
         try {
             String[] lines =
@@ -72,4 +72,3 @@ public class ProcessAsciiDocTest {
         }
     }
 }
-
