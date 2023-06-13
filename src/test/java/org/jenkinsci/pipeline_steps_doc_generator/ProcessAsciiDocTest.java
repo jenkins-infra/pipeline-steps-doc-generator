@@ -2,6 +2,7 @@ package org.jenkinsci.pipeline_steps_doc_generator;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,34 +14,29 @@ public class ProcessAsciiDocTest {
     File child = new File(allAscii + "/workflow-scm.adoc");
 
     @Test
-    public void isExceptionThrown() {
+    public void testSeparateClassThrowsException() {
         ProcessAsciiDoc pad = new ProcessAsciiDoc();
-        try {
+        assertThrows(RuntimeException.class, () -> {
             pad.separateClass("$class: 'PvcsScm'", allAscii, child, 500);
-            assertTrue(false);
-        } catch (RuntimeException ex) {
-            assertTrue(true);
-        } catch (IOException ex) {
-            assertTrue(false);
-        }
+        });
     }
 
     @Test
-    public void isNewAdocCreated() {
+    public void testNewAdocCreated() {
         ProcessAsciiDoc pad = new ProcessAsciiDoc();
         try {
             pad.separateClass("$class: 'GitSCM'", allAscii, child, 500);
             File file = new File("src/test/resources/input/params/gitscm.adoc");
             assertTrue(file.exists());
             file.delete();
-        } catch (RuntimeException | IOException ex) {
+        } catch (IOException ex) {
             ex.printStackTrace();
-            assertTrue(false);
+            assertTrue("IOException occurred", false);
         }
     }
 
     @Test
-    public void isSeparatedContentCorrect() {
+    public void testSeparatedContentCorrect() {
         ProcessAsciiDoc pad = new ProcessAsciiDoc();
         try {
             pad.separateClass("$class: 'GitSCM'", allAscii, child, 500);
@@ -48,13 +44,13 @@ public class ProcessAsciiDocTest {
             File file2 = new File("src/test/resources/input/compare/gitscm.adoc");
             assertTrue(FileUtils.contentEquals(file1, file2));
             file1.delete();
-        } catch (RuntimeException | IOException ex) {
-            assertTrue(false);
+        } catch (IOException ex) {
+            assertTrue("IOException occurred", false);
         }
     }
 
     @Test
-    public void isHyperlinkReplacedCorrectly() {
+    public void testHyperlinkReplacedCorrectly() {
         ProcessAsciiDoc pad = new ProcessAsciiDoc();
         try {
             String[] lines =
@@ -71,8 +67,9 @@ public class ProcessAsciiDocTest {
             assertEquals(
                     "<li><span><a href=\"/doc/pipeline/steps/params/gitscm\"><code>$class: 'GitSCM'</code></a></span></li>",
                     link);
-        } catch (RuntimeException | IOException ex) {
-            assertTrue(false);
+        } catch (IOException ex) {
+            assertTrue("IOException occurred", false);
         }
     }
 }
+
