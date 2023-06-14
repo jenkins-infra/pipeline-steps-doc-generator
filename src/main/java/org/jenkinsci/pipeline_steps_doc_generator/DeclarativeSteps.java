@@ -11,6 +11,8 @@ import hudson.model.ParameterDefinition;
 import hudson.triggers.TriggerDescriptor;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -20,7 +22,6 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.commons.io.FileUtils;
 import org.jenkinsci.infra.tools.HyperLocalPluginManager;
 import org.jenkinsci.plugins.pipeline.modeldefinition.agent.DeclarativeAgentDescriptor;
 import org.jenkinsci.plugins.pipeline.modeldefinition.options.DeclarativeOptionDescriptor;
@@ -61,8 +62,7 @@ public class DeclarativeSteps {
             String whole9yards = ToAsciiDoc.generateDirectiveHelp(entry.getKey(), pluginDescMap, true);
 
             try {
-                FileUtils.writeStringToFile(
-                        new File(declPath, entry.getKey() + ".adoc"), whole9yards, StandardCharsets.UTF_8);
+                Files.writeString(new File(declPath, entry.getKey() + ".adoc").toPath(), whole9yards, StandardCharsets.UTF_8);
             } catch (Exception ex) {
                 LOG.log(Level.SEVERE, "Error generating directive file for " + entry.getKey() + ".  Skip.", ex);
                 // continue to next directive
