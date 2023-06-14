@@ -12,8 +12,11 @@ import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 
 public class ProcessAsciiDocTest {
-    String allAscii = "src/test/resources/input/";
-    File child = new File(allAscii + "/workflow-scm.adoc");
+    private String allAscii = "src/test/resources/input/";
+    private File allAsciiDir = new File(allAscii);
+    private File child = new File(allAsciiDir, "workflow-scm.adoc");
+
+    private String GIT_SCM_PARAMS_NAME = allAscii + "params/gitscm.adoc";
 
     @Test
     public void isExceptionThrown() {
@@ -27,23 +30,19 @@ public class ProcessAsciiDocTest {
     public void isNewAdocCreated() throws Exception {
         ProcessAsciiDoc pad = new ProcessAsciiDoc();
         pad.separateClass("$class: 'GitSCM'", allAscii, child, 500);
-        File file = new File("src/test/resources/input/params/gitscm.adoc");
+        File file = new File(GIT_SCM_PARAMS_NAME);
         assertThat(file, aReadableFile());
         file.delete();
     }
 
     @Test
-    public void isSeparatedContentCorrect() {
+    public void isSeparatedContentCorrect() throws Exception {
         ProcessAsciiDoc pad = new ProcessAsciiDoc();
-        try {
-            pad.separateClass("$class: 'GitSCM'", allAscii, child, 500);
-            File file1 = new File("src/test/resources/input/params/gitscm.adoc");
-            File file2 = new File("src/test/resources/input/compare/gitscm.adoc");
-            assertTrue(FileUtils.contentEquals(file1, file2));
-            file1.delete();
-        } catch (IOException ex) {
-            assertTrue("IOException occurred", false);
-        }
+        pad.separateClass("$class: 'GitSCM'", allAscii, child, 500);
+        File file1 = new File(GIT_SCM_PARAMS_NAME);
+        File file2 = new File("src/test/resources/input/compare/gitscm.adoc");
+        assertTrue(FileUtils.contentEquals(file1, file2));
+        file1.delete();
     }
 
     @Test
@@ -53,7 +52,7 @@ public class ProcessAsciiDocTest {
             String[] lines =
                     pad.separateClass("$class: 'GitSCM'", allAscii, child, 500).split("\n");
             String link = "";
-            File file = new File("src/test/resources/input/params/gitscm.adoc");
+            File file = new File(GIT_SCM_PARAMS_NAME);
             file.delete();
             for (String line : lines) {
                 if (line.contains("class: 'GitSCM'")) {
