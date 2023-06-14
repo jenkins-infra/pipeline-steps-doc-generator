@@ -18,6 +18,8 @@ import java.io.Serializable;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -30,8 +32,6 @@ import java.util.logging.Logger;
 import java.util.stream.Stream;
 import jenkins.InitReactorRunner;
 import jenkins.model.Jenkins;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.jenkinsci.infra.tools.HyperLocalPluginManager;
 import org.jenkinsci.plugins.structs.describable.DescribableModel;
 import org.jenkinsci.plugins.structs.describable.DescribableParameter;
@@ -248,10 +248,8 @@ public class PipelineStepExtractor {
 
         JSONObject deprecatedPlugins = new JSONObject();
         try {
-            deprecatedPlugins = new JSONObject(IOUtils.toString(
-                            new URL("https://updates.jenkins.io/current/update-center.actual.json"),
-                            Charset.forName("UTF-8")))
-                    .getJSONObject("deprecations");
+            deprecatedPlugins = JSONObject deprecatedPlugins = new JSONObject(new String(new URL("https://updates.jenkins.io/current/update-center.actual.json").openStream().readAllBytes(), StandardCharsets.UTF_8)).getJSONObject("deprecations");
+
         } catch (IOException ex) {
             LOG.log(Level.WARNING, "Update center could not be read" + ex);
         }
@@ -267,8 +265,8 @@ public class PipelineStepExtractor {
             String whole9yards = ToAsciiDoc.generatePluginHelp(plugin, displayName, byPlugin, isDeprecated, true);
 
             try {
-                FileUtils.writeStringToFile(
-                        new File(allAsciiPath, plugin + ".adoc"), whole9yards, StandardCharsets.UTF_8);
+                Files.writeString(
+                    new File(allAsciiPath, plugin + ".adoc").toPath(), whole9yards, StandardCharsets.UTF_8);
             } catch (Exception ex) {
                 LOG.log(Level.SEVERE, "Error generating plugin file for " + plugin + ".  Skip.", ex);
                 // continue to next plugin
