@@ -273,7 +273,7 @@ public class ToAsciiDoc {
         for (Klass<?> c = Klass.java(type); c != null; c = c.getSuperClass()) {
             URL u = c.getResource(name);
             if (u != null) {
-                return new String(Files.readAllBytes(Paths.get(url.toURI())), StandardCharsets.UTF_8);
+                return new String(Files.readAllBytes(Paths.get(u.toURI())), StandardCharsets.UTF_8);
             }
         }
         return null;
