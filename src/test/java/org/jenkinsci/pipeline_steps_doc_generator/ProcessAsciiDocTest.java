@@ -1,5 +1,7 @@
 package org.jenkinsci.pipeline_steps_doc_generator;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.io.FileMatchers.aReadableFile;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
@@ -22,17 +24,12 @@ public class ProcessAsciiDocTest {
     }
 
     @Test
-    public void isNewAdocCreated() {
+    public void isNewAdocCreated() throws Exception {
         ProcessAsciiDoc pad = new ProcessAsciiDoc();
-        try {
-            pad.separateClass("$class: 'GitSCM'", allAscii, child, 500);
-            File file = new File("src/test/resources/input/params/gitscm.adoc");
-            assertTrue(file.exists());
-            file.delete();
-        } catch (IOException ex) {
-            ex.printStackTrace();
-            assertTrue("IOException occurred", false);
-        }
+        pad.separateClass("$class: 'GitSCM'", allAscii, child, 500);
+        File file = new File("src/test/resources/input/params/gitscm.adoc");
+        assertThat(file, aReadableFile());
+        file.delete();
     }
 
     @Test
