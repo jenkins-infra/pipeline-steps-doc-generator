@@ -248,7 +248,7 @@ public class PipelineStepExtractor {
 
         JSONObject deprecatedPlugins = new JSONObject();
         try {
-            deprecatedPlugins = JSONObject deprecatedPlugins = new JSONObject(new String(new URL("https://updates.jenkins.io/current/update-center.actual.json").openStream().readAllBytes(), StandardCharsets.UTF_8)).getJSONObject("deprecations");
+            deprecatedPlugins = new JSONObject(new String(new URL("https://updates.jenkins.io/current/update-center.actual.json").openStream().readAllBytes(), StandardCharsets.UTF_8)).getJSONObject("deprecations");
 
         } catch (IOException ex) {
             LOG.log(Level.WARNING, "Update center could not be read" + ex);
