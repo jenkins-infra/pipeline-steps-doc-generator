@@ -9,7 +9,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.logging.Logger;
-import org.apache.commons.io.FilenameUtils;
 
 /**
  * Acts as a processing layer after the AsciiDocs are generated from
@@ -109,7 +108,8 @@ public class ProcessAsciiDoc {
                 LOG.info("Iterating through parameter class name: " + className);
                 if (directoryListing != null) {
                     for (File child : directoryListing) {
-                        String type = FilenameUtils.getExtension(child.getName());
+                        String fileName = child.getName();
+                        String type = fileName.substring(fileName.lastIndexOf('.') + 1);
                         if (type.equals("adoc")) {
                             Path currentPath = Path.of(child.getPath());
                             Files.writeString(currentPath, separateClass(className, allAscii, child, linesThreshold));
