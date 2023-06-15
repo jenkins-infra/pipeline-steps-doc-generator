@@ -12,7 +12,6 @@ import hudson.triggers.TriggerDescriptor;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -62,7 +61,8 @@ public class DeclarativeSteps {
             String whole9yards = ToAsciiDoc.generateDirectiveHelp(entry.getKey(), pluginDescMap, true);
 
             try {
-                Files.writeString(new File(declPath, entry.getKey() + ".adoc").toPath(), whole9yards, StandardCharsets.UTF_8);
+                Files.writeString(
+                        new File(declPath, entry.getKey() + ".adoc").toPath(), whole9yards, StandardCharsets.UTF_8);
             } catch (Exception ex) {
                 LOG.log(Level.SEVERE, "Error generating directive file for " + entry.getKey() + ".  Skip.", ex);
                 // continue to next directive
