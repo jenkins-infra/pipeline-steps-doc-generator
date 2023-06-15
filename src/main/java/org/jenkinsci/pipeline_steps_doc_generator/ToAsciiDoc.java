@@ -3,11 +3,12 @@ package org.jenkinsci.pipeline_steps_doc_generator;
 import hudson.Main;
 import hudson.model.Descriptor;
 import java.io.IOException;
-import java.lang.String;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -117,12 +118,13 @@ public class ToAsciiDoc {
     }
 
     private static String describeErrorType(ParameterType type) {
-        return type.getActualType().toString()
-            .replace("&", "&amp;")
-            .replace("<", "&lt;")
-            .replace(">", "&gt;")
-            .replace("\"", "&quot;")
-            .replace("'", "&#39;");
+        return type.getActualType()
+                .toString()
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
     }
 
     private static String generateAttrHelp(DescribableParameter param) throws Exception {
@@ -273,7 +275,13 @@ public class ToAsciiDoc {
         for (Klass<?> c = Klass.java(type); c != null; c = c.getSuperClass()) {
             URL u = c.getResource(name);
             if (u != null) {
-                return new String(Files.readAllBytes(Paths.get(u.toURI())), StandardCharsets.UTF_8);
+                URI uri;
+                try {
+                    uri = u.toURI();
+                } catch (URISyntaxException ue) {
+                    throw new IOException(ue);
+                }
+                return new String(Files.readAllBytes(Paths.get(uri)), StandardCharsets.UTF_8);
             }
         }
         return null;
