@@ -7,7 +7,6 @@ import static org.hamcrest.io.FileMatchers.aReadableFile;
 import static org.junit.Assert.assertThrows;
 
 import java.io.File;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -44,7 +43,7 @@ public class ProcessAsciiDocTest {
     }
 
     private String readFile(String fileName) throws Exception {
-        return new String(Files.readAllBytes(Paths.get(fileName)), StandardCharsets.UTF_8);
+        return Files.readString(Paths.get(fileName)).replace("\r", "").trim();
     }
 
     @Test
