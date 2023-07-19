@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -34,7 +35,7 @@ public class ProcessAsciiDoc {
      */
     public String separateClass(String className, String allAscii, File child, int linesThreshold)
             throws IOException, RuntimeException {
-        BufferedReader br = new BufferedReader(new FileReader(child));
+        BufferedReader br = new BufferedReader(new FileReader(child, StandardCharsets.UTF_8));
         StringBuilder duplicate = new StringBuilder(); // contains the content of the current file minus the parameter
         // details
         String line;
