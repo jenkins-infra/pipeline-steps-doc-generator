@@ -1,14 +1,12 @@
 package org.jenkinsci.pipeline_steps_doc_generator;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Main;
 import hudson.model.Descriptor;
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.io.InputStreamReader;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -271,17 +269,14 @@ public class ToAsciiDoc {
      * @return file content
      * @throws IOException if file can't be read
      */
+    @SuppressFBWarnings(value = "URLCONNECTION_SSRF_FD", justification = "URL comes from a safe source")
     static String getHelp(String name, Class<?> type) throws IOException {
         for (Klass<?> c = Klass.java(type); c != null; c = c.getSuperClass()) {
             URL u = c.getResource(name);
             if (u != null) {
-                URI uri;
-                try {
-                    uri = u.toURI();
-                } catch (URISyntaxException ue) {
-                    throw new IOException(ue);
+                try (BufferedReader br = new BufferedReader(new InputStreamReader(u.openStream()))) {
+                    return br.lines().collect(Collectors.joining("\n"));
                 }
-                return new String(Files.readAllBytes(Paths.get(uri)), StandardCharsets.UTF_8);
             }
         }
         return null;
