@@ -1,15 +1,20 @@
 package org.jenkinsci.pipeline_steps_doc_generator;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import hudson.ExtensionList;
 import hudson.Main;
 import hudson.model.Descriptor;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -18,6 +23,8 @@ import java.util.Stack;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+
+import org.jenkinsci.infra.tools.HyperLocalPluginManager;
 import org.jenkinsci.plugins.structs.SymbolLookup;
 import org.jenkinsci.plugins.structs.describable.ArrayType;
 import org.jenkinsci.plugins.structs.describable.AtomicType;
@@ -39,6 +46,9 @@ public class ToAsciiDoc {
     private static final Map<String, String> typeDescriptions = new HashMap<>();
     public static final String ARRAY_LIST_OF = "Array / List of ";
     public static final String BUILD_STEP_DESCRIPTION = "Build Step (<code>hudson.tasks.BuildStep</code>)";
+    private final HyperLocalPluginManager pluginManager;
+
+    private static final List<Class<?>> extractable = new ArrayList<>();
 
     static {
         typeDescriptions.put("java.lang.Object", "<code>Object</code>");
@@ -49,7 +59,28 @@ public class ToAsciiDoc {
     /**
      * Keeps track of nested {@link DescribableModel#getType()} to avoid recursion.
      */
-    private static Stack<Class<?>> nesting = new Stack<>();
+    private Stack<Class<?>> nesting = new Stack<>();
+
+    public Map<String, StringBuilder> getExtractedParams() {
+        return extractedParams;
+    }
+
+    private Map<String, StringBuilder> extractedParams = new HashMap<>();
+    private Map<String, String> map;
+
+    public ToAsciiDoc(HyperLocalPluginManager pluginManager) {
+        this.pluginManager = pluginManager;
+        this.map = new HashMap<>();
+        for (Map.Entry<String, String> entry: pluginManager.uberPlusClassLoader
+                .getByPlugin().entrySet()) {
+            ExtensionList<Descriptor>  descriptors = ExtensionList.lookup(Descriptor.class);
+            for (Descriptor d: descriptors) {
+                if (d.getClass().getName() == entry.getKey()) {
+                    map.put(d.clazz.getName(), entry.getValue());
+                }
+            }
+        }
+    }
 
     /** Asciidoc conversion functions. **/
     private static String header(int depth) {
@@ -61,7 +92,7 @@ public class ToAsciiDoc {
                 + "</div>\n";
     }
 
-    static String describeType(ParameterType type, String prefix) throws Exception {
+    String describeType(ParameterType type, String prefix) throws Exception {
         StringBuilder typeInfo = new StringBuilder();
         if (type instanceof EnumType) {
             typeInfo.append("<li><b>")
@@ -84,19 +115,33 @@ public class ToAsciiDoc {
                     .append(generateHelp(((HomogeneousObjectType) type).getSchemaType(), false));
         } else if (type instanceof HeterogeneousObjectType) {
             typeInfo.append("<b>").append(prefix).append("Nested Choice of Objects</b>\n");
-            if (((HeterogeneousObjectType) type).getType() != Object.class) {
+            HeterogeneousObjectType heterogeneousObjectType = (HeterogeneousObjectType) type;
+            if (heterogeneousObjectType.getType() != Object.class) {
                 for (Map.Entry<String, DescribableModel<?>> entry :
-                        ((HeterogeneousObjectType) type).getTypes().entrySet()) {
+                        heterogeneousObjectType.getTypes().entrySet()) {
                     Set<String> symbols =
                             SymbolLookup.getSymbolValue(entry.getValue().getType());
                     String symbol = symbols.isEmpty()
                             ? DescribableModel.CLAZZ + ": '" + entry.getKey() + "'"
                             : symbols.iterator().next();
-                    typeInfo.append("<li><code>")
-                            .append(symbol)
-                            .append("</code><div>\n")
-                            .append(generateHelp(entry.getValue(), true))
-                            .append("</div></li>\n");
+                    String help = generateHelp(entry.getValue(), true);
+                    if (shouldExtract(heterogeneousObjectType.getType())) {
+                        String pluginName = map.get(entry.getValue().getType().getName());
+                        extractedParams.computeIfAbsent(pluginName, (foo) -> new StringBuilder())
+                                .append(header(3)).append(symbol)
+                                .append("\n\n").append(help).append("\n");
+                        typeInfo.append("<li><a href=\"../")
+                                .append(pluginName)
+                                .append("/params#").append(symbol).append("\">")
+                                .append(symbol)
+                                .append("</a></li>\n");
+                    } else {
+                        typeInfo.append("<li><code>")
+                                .append(symbol)
+                                .append("</code><div>\n")
+                                .append(help)
+                                .append("</div></li>\n");
+                    }
                 }
             }
         } else if (type instanceof ErrorType) { // Shouldn't hit this; open a ticket
@@ -115,6 +160,28 @@ public class ToAsciiDoc {
         return typeInfo.toString();
     }
 
+    private boolean shouldExtract(Class<?> type) {
+        if (extractable.isEmpty()) {
+            try {
+                List<String> config = Files.readAllLines(Paths.get("config.txt"));
+                for (String className : config) {
+                    className = className.trim();
+                    if (className.startsWith("--") || className.isBlank()) {
+                        continue;
+                    }
+                    try {
+                        extractable.add(pluginManager.uberPlusClassLoader.loadClass(className));
+                    } catch (Exception e) {
+                        LOG.log(Level.WARNING, "Cannot load " + className);
+                    }
+                }
+            } catch (IOException ex) {
+                LOG.warning("Cannot load config");
+            }
+        }
+        return extractable.stream().anyMatch(c -> c.isAssignableFrom(type));
+    }
+
     private static String describeErrorType(ParameterType type) {
         return type.getActualType()
                 .toString()
@@ -125,7 +192,7 @@ public class ToAsciiDoc {
                 .replace("'", "&#39;");
     }
 
-    private static String generateAttrHelp(DescribableParameter param) throws Exception {
+    private String generateAttrHelp(DescribableParameter param) throws Exception {
         StringBuilder attrHelp = new StringBuilder();
         String help = param.getHelp();
         if (help != null && !help.equals("")) {
@@ -170,7 +237,7 @@ public class ToAsciiDoc {
         return typeDesc;
     }
 
-    private static String generateHelp(DescribableModel<?> model, boolean indent) throws Exception {
+    private String generateHelp(DescribableModel<?> model, boolean indent) throws Exception {
         if (nesting.contains(model.getType())) return ""; // if we are recursing, cut the search
         nesting.push(model.getType());
 
@@ -221,7 +288,7 @@ public class ToAsciiDoc {
      * Generate documentation for a plugin step.
      * For delegate steps adds example without Symbol.
      */
-    public static String generateStepHelp(QuasiDescriptor d) {
+    public String generateStepHelp(QuasiDescriptor d) {
         StringBuilder mkDesc =
                 new StringBuilder(header(3)).append(" `").append(d.getSymbol()).append("`: ");
         mkDesc.append(getDisplayName(d.real)).append("\n++++\n");
@@ -253,7 +320,7 @@ public class ToAsciiDoc {
         return "(no description)";
     }
 
-    private static void appendSimpleStepDescription(StringBuilder mkDesc, Class<?> clazz) throws IOException {
+    private void appendSimpleStepDescription(StringBuilder mkDesc, Class<?> clazz) throws IOException {
         try {
             mkDesc.append(generateHelp(new DescribableModel<>(clazz), true));
         } catch (Exception ex) {
@@ -285,7 +352,7 @@ public class ToAsciiDoc {
     /**
      * Generate documentation for a {@link Descriptor}
      */
-    private static String generateDescribableHelp(Descriptor<?> d) {
+    private String generateDescribableHelp(Descriptor<?> d) {
         if (d instanceof StepDescriptor) {
             return generateStepHelp(new QuasiDescriptor(d, null));
         } else {
@@ -330,7 +397,7 @@ public class ToAsciiDoc {
      *
      * @return String  total documentation for the page
      */
-    public static String generatePluginHelp(
+    public String generatePluginHelp(
             String pluginName,
             String displayName,
             Map<String, List<QuasiDescriptor>> byPlugin,
@@ -360,7 +427,7 @@ public class ToAsciiDoc {
         return whole9yards.toString();
     }
 
-    public static String generateDirectiveHelp(
+    public String generateDirectiveHelp(
             String directiveName, Map<String, List<Descriptor>> descsByPlugin, boolean genHeader) {
         Main.isUnitTest = true;
         StringBuilder whole9yards = new StringBuilder();

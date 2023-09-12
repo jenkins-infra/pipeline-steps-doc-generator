@@ -44,7 +44,7 @@ public class DeclarativeSteps {
         }
         declDest.mkdirs();
         String declPath = declDest.getAbsolutePath();
-
+        ToAsciiDoc toAsciiDoc = new ToAsciiDoc(pluginManager);
         Map<Class<? extends Descriptor>, Predicate<Descriptor>> filters = getDeclarativeFilters();
 
         for (Map.Entry<String, List<Class<? extends Descriptor>>> entry :
@@ -58,7 +58,7 @@ public class DeclarativeSteps {
                 pluginDescMap = processDescriptors(d, pluginDescMap, filter, pluginManager);
             }
 
-            String whole9yards = ToAsciiDoc.generateDirectiveHelp(entry.getKey(), pluginDescMap, true);
+            String whole9yards = toAsciiDoc.generateDirectiveHelp(entry.getKey(), pluginDescMap, true);
 
             try {
                 Files.writeString(
