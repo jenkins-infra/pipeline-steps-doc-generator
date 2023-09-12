@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -23,7 +22,6 @@ import java.util.Stack;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-
 import org.jenkinsci.infra.tools.HyperLocalPluginManager;
 import org.jenkinsci.plugins.structs.SymbolLookup;
 import org.jenkinsci.plugins.structs.describable.ArrayType;
@@ -71,11 +69,11 @@ public class ToAsciiDoc {
     public ToAsciiDoc(HyperLocalPluginManager pluginManager) {
         this.pluginManager = pluginManager;
         this.map = new HashMap<>();
-        for (Map.Entry<String, String> entry: pluginManager.uberPlusClassLoader
-                .getByPlugin().entrySet()) {
-            ExtensionList<Descriptor>  descriptors = ExtensionList.lookup(Descriptor.class);
-            for (Descriptor d: descriptors) {
-                if (d.getClass().getName() == entry.getKey()) {
+        for (Map.Entry<String, String> entry :
+                pluginManager.uberPlusClassLoader.getByPlugin().entrySet()) {
+            ExtensionList<Descriptor> descriptors = ExtensionList.lookup(Descriptor.class);
+            for (Descriptor d : descriptors) {
+                if (entry.getKey().equals(d.getClass().getName())) {
                     map.put(d.clazz.getName(), entry.getValue());
                 }
             }
@@ -127,12 +125,18 @@ public class ToAsciiDoc {
                     String help = generateHelp(entry.getValue(), true);
                     if (shouldExtract(heterogeneousObjectType.getType())) {
                         String pluginName = map.get(entry.getValue().getType().getName());
-                        extractedParams.computeIfAbsent(pluginName, (foo) -> new StringBuilder())
-                                .append(header(3)).append(symbol)
-                                .append("\n\n").append(help).append("\n");
+                        extractedParams
+                                .computeIfAbsent(pluginName, (foo) -> new StringBuilder())
+                                .append(header(3))
+                                .append(symbol)
+                                .append("\n\n")
+                                .append(help)
+                                .append("\n");
                         typeInfo.append("<li><a href=\"../")
                                 .append(pluginName)
-                                .append("/params#").append(symbol).append("\">")
+                                .append("/params#")
+                                .append(symbol)
+                                .append("\">")
                                 .append(symbol)
                                 .append("</a></li>\n");
                     } else {
@@ -403,7 +407,7 @@ public class ToAsciiDoc {
             Map<String, List<QuasiDescriptor>> byPlugin,
             boolean isDeprecated,
             boolean genHeader) {
-        Main.isUnitTest = true;
+        setUnitTest();
 
         // TODO: if condition
         StringBuilder whole9yards = new StringBuilder();
@@ -427,9 +431,13 @@ public class ToAsciiDoc {
         return whole9yards.toString();
     }
 
+    private static void setUnitTest() {
+        Main.isUnitTest = true;
+    }
+
     public String generateDirectiveHelp(
             String directiveName, Map<String, List<Descriptor>> descsByPlugin, boolean genHeader) {
-        Main.isUnitTest = true;
+        setUnitTest();
         StringBuilder whole9yards = new StringBuilder();
         if (genHeader) {
             whole9yards.append(generateHeader(directiveName));

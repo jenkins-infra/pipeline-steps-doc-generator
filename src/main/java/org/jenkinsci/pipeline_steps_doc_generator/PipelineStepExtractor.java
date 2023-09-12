@@ -236,7 +236,8 @@ public class PipelineStepExtractor {
         private static final long serialVersionUID = 1L;
     }
 
-    public void generateAscii(Map<String, Map<String, List<QuasiDescriptor>>> allSteps, HyperLocalPluginManager pluginManager) {
+    public void generateAscii(
+            Map<String, Map<String, List<QuasiDescriptor>>> allSteps, HyperLocalPluginManager pluginManager) {
         File allAscii;
         if (asciiDest != null) {
             allAscii = new File(asciiDest);
@@ -267,8 +268,7 @@ public class PipelineStepExtractor {
             PluginWrapper thePlugin = pluginManager.getPlugin(plugin);
             String displayName = thePlugin == null ? "Jenkins Core" : thePlugin.getDisplayName();
             boolean isDeprecated = deprecatedPlugins.has(plugin);
-            String whole9yards = toAsciiDoc.generatePluginHelp(plugin, displayName, byPlugin, isDeprecated,
-                    true);
+            String whole9yards = toAsciiDoc.generatePluginHelp(plugin, displayName, byPlugin, isDeprecated, true);
 
             try {
                 Paths.get(allAsciiPath, plugin).toFile().mkdirs();
@@ -279,12 +279,15 @@ public class PipelineStepExtractor {
                 // continue to next plugin
             }
         }
-        for (Map.Entry<String, StringBuilder> entry: toAsciiDoc.getExtractedParams().entrySet()) {
+        for (Map.Entry<String, StringBuilder> entry :
+                toAsciiDoc.getExtractedParams().entrySet()) {
             String plugin = entry.getKey();
             try {
                 Paths.get(allAsciiPath, plugin).toFile().mkdirs();
                 Files.writeString(
-                        new File(allAsciiPath, entry.getKey() + "/params.adoc").toPath(), entry.getValue().toString(), StandardCharsets.UTF_8);
+                        new File(allAsciiPath, entry.getKey() + "/params.adoc").toPath(),
+                        entry.getValue().toString(),
+                        StandardCharsets.UTF_8);
             } catch (IOException ex) {
                 LOG.log(Level.SEVERE, "Error generating plugin params file for " + entry.getKey() + ".  Skip.", ex);
             }

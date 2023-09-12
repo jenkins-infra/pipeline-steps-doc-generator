@@ -1,6 +1,5 @@
 package org.jenkinsci.pipeline_steps_doc_generator;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
@@ -16,7 +15,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-
 import org.jenkinsci.infra.tools.HyperLocalPluginManager;
 import org.jenkinsci.plugins.structs.describable.DescribableModel;
 import org.junit.Test;
@@ -27,7 +25,8 @@ public class ToAsciidocTest {
     public void testDescribeType() {
         DescribableModel<DescribeMe> model = new DescribableModel<>(DescribeMe.class);
         try {
-            String desc = new ToAsciiDoc(new HyperLocalPluginManager(true)).describeType(model.getParameter("s").getType(), "");
+            String desc = new ToAsciiDoc(new HyperLocalPluginManager(true))
+                    .describeType(model.getParameter("s").getType(), "");
             assertEquals(
                     "<li><b>Type:</b> <code>java.util.HashMap&lt;java.lang.String, java.lang.String&gt;</code></li>",
                     desc.trim());
@@ -79,8 +78,7 @@ public class ToAsciidocTest {
     }
 
     private void downloadPlugin(Path plugins, String id, String version) throws IOException {
-        URL website = new URL(
-                "https://updates.jenkins.io/download/plugins/" + id + "/" + version + "/" + id + ".hpi");
+        URL website = new URL("https://updates.jenkins.io/download/plugins/" + id + "/" + version + "/" + id + ".hpi");
         ReadableByteChannel rbc = Channels.newChannel(website.openStream());
         try (FileOutputStream fos =
                 new FileOutputStream(plugins.resolve(id + ".hpi").toFile())) {
