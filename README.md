@@ -1,4 +1,4 @@
-# pipeline-steps-doc-generator
+# Pipeline steps documentation generator
 
 This project generates the documentation for pipeline jobs.
 
