@@ -3,6 +3,7 @@ package org.jenkinsci.pipeline_steps_doc_generator;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.MockJenkins;
 import hudson.PluginManager;
 import hudson.PluginWrapper;
@@ -90,6 +91,7 @@ public class PipelineStepExtractor {
         System.exit(0); // otherwise environment hangs around
     }
 
+    @SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", justification = "Retain API compatibility")
     public HyperLocalPluginManager pluginManager;
 
     public Map<String, Map<String, List<QuasiDescriptor>>> findSteps() {
