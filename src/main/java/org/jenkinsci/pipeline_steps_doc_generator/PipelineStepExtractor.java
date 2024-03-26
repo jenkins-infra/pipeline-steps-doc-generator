@@ -5,7 +5,6 @@ import static org.mockito.Mockito.when;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.MockJenkins;
-import hudson.PluginManager;
 import hudson.PluginWrapper;
 import hudson.init.InitMilestone;
 import hudson.init.InitStrategy;
@@ -19,6 +18,7 @@ import java.io.Serializable;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -238,7 +238,8 @@ public class PipelineStepExtractor {
         private static final long serialVersionUID = 1L;
     }
 
-    public void generateAscii(Map<String, Map<String, List<QuasiDescriptor>>> allSteps, PluginManager pluginManager) {
+    public void generateAscii(
+            Map<String, Map<String, List<QuasiDescriptor>>> allSteps, HyperLocalPluginManager pluginManager) {
         File allAscii;
         if (asciiDest != null) {
             allAscii = new File(asciiDest);
@@ -261,25 +262,38 @@ public class PipelineStepExtractor {
 
         allAscii.mkdirs();
         String allAsciiPath = allAscii.getAbsolutePath();
+
+        ToAsciiDoc toAsciiDoc = new ToAsciiDoc(pluginManager);
         for (String plugin : allSteps.keySet()) {
             LOG.info("processing " + plugin);
             Map<String, List<QuasiDescriptor>> byPlugin = allSteps.get(plugin);
             PluginWrapper thePlugin = pluginManager.getPlugin(plugin);
             String displayName = thePlugin == null ? "Jenkins Core" : thePlugin.getDisplayName();
             boolean isDeprecated = deprecatedPlugins.has(plugin);
-            String whole9yards = ToAsciiDoc.generatePluginHelp(plugin, displayName, byPlugin, isDeprecated, true);
+            String whole9yards = toAsciiDoc.generatePluginHelp(plugin, displayName, byPlugin, isDeprecated, true);
 
             try {
+                Paths.get(allAsciiPath, plugin).toFile().mkdirs();
                 Files.writeString(
-                        new File(allAsciiPath, plugin + ".adoc").toPath(), whole9yards, StandardCharsets.UTF_8);
+                        new File(allAsciiPath, plugin + "/index.adoc").toPath(), whole9yards, StandardCharsets.UTF_8);
             } catch (Exception ex) {
                 LOG.log(Level.SEVERE, "Error generating plugin file for " + plugin + ".  Skip.", ex);
                 // continue to next plugin
             }
         }
-        ProcessAsciiDoc pad = new ProcessAsciiDoc();
-        new File(allAsciiPath + "/params").mkdirs();
-        pad.processDocs(allAsciiPath, 100);
+        for (Map.Entry<String, StringBuilder> entry :
+                toAsciiDoc.getExtractedParams().entrySet()) {
+            String plugin = entry.getKey();
+            try {
+                Paths.get(allAsciiPath, plugin).toFile().mkdirs();
+                Files.writeString(
+                        new File(allAsciiPath, entry.getKey() + "/params.adoc").toPath(),
+                        entry.getValue().toString(),
+                        StandardCharsets.UTF_8);
+            } catch (IOException ex) {
+                LOG.log(Level.SEVERE, "Error generating plugin params file for " + entry.getKey() + ".  Skip.", ex);
+            }
+        }
     }
 
     public void generateDeclarativeSteps() {

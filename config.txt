@@ -2,41 +2,14 @@
 
 -- parameter classes that occur under scm
 -- (all these classes have same documentation present at 10 different places)
-$class: 'CCUCMScm'
-$class: 'CVSSCM'
-$class: 'CvsProjectset'
-scmGit
-$class: 'GitSCM'
-$class: 'MercurialSCM'
-$class: 'RTCScm'
-$class: 'SubversionSCM'
-$class: 'hudson.plugins.repo.RepoScm'
-$class: 'MultiSCM'
+hudson.scm.SCM
 
 -- only present in workflow-multibranch.adoc
-$class: 'JobRestrictionProperty'
-pipelineTriggers
-$class: 'YouTrackProjectProperty'
-$class: 'it.dockins.dockerslaves.spec.ContainerSetDefinition'
+hudson.model.JobProperty
 
 -- common for workflow-multibranch.adoc, hubot-steps.adoc, pipeline-input-step.adoc
-$class: 'ExtensibleChoiceParameterDefinition'
-$class: 'RunFilterParameter'
-$class: 'RunSelectorParameter'
+hudson.model.ParameterDefinition
+
 
 -- common for workflow-multibranch.adoc, pipeline-groovy-lib.adoc
-$class: 'BacklogPullRequestSCMSource'
-multiBranch
-dagshubScmSource
-git
-$class: 'GiteaSCMSource'
-multiGraph
-$class: 'MercurialSCMSource'
-scmManager
-scmManagerSvn
-fromScm
-multiStreams
-$class: 'SubversionSCMSource'
-multiSwarm
-Tuleap
-bitbucket
+jenkins.scm.api.SCMSource
