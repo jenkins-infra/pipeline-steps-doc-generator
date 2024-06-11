@@ -27,7 +27,7 @@ public class QuasiDescriptor {
             if (!symbolValues.isEmpty()) {
                 return symbolValues.iterator().next();
             } else if (parent != null) {
-                return String.format("%s([$class: '%s'])", parent.getFunctionName(), real.clazz.getSimpleName());
+                return "%s([$class: '%s'])".formatted(parent.getFunctionName(), real.clazz.getSimpleName());
             } else {
                 throw new AssertionError("Symbol present but no values defined.");
             }
