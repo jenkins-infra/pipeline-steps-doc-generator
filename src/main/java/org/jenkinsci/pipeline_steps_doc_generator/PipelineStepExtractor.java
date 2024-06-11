@@ -158,7 +158,7 @@ public class PipelineStepExtractor {
     }
 
     protected static Stream<Descriptor<?>> getMetaDelegates(Descriptor<?> d) {
-        if (d instanceof StepDescriptor && ((StepDescriptor) d).isMetaStep()) {
+        if (d instanceof StepDescriptor descriptor && descriptor.isMetaStep()) {
             DescribableModel<?> m = DescribableModel.of(d.clazz);
             Collection<DescribableParameter> parameters = m.getParameters();
             if (parameters.size() == 1) {

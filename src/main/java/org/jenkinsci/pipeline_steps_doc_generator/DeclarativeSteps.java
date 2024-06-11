@@ -123,8 +123,7 @@ public class DeclarativeSteps {
         Map<Class<? extends Descriptor>, Predicate<Descriptor>> filters = new HashMap<>();
 
         filters.put(StepDescriptor.class, d -> {
-            if (d instanceof StepDescriptor) {
-                StepDescriptor s = (StepDescriptor) d;
+            if (d instanceof StepDescriptor s) {
                 // Note that this is lifted from org.jenkinsci.plugins.pipeline.modeldefinition.model.Options, with the
                 // blocked steps hardcoded. This could be better.
                 return s.takesImplicitBlockArgument()
