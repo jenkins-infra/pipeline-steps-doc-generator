@@ -232,8 +232,8 @@ public class ToAsciiDoc {
             if (delegateExample.isPresent()) {
                 mkDesc.append(getHelp("help.html", d.real.clazz));
                 String symbol = new QuasiDescriptor(delegateExample.get(), (StepDescriptor) d.real).getSymbol();
-                mkDesc.append(String.format(
-                        "To use this step you need to specify a delegate class, e.g <code>%s</code>.", symbol));
+                mkDesc.append("To use this step you need to specify a delegate class, e.g <code>%s</code>."
+                        .formatted(symbol));
             } else {
                 appendSimpleStepDescription(mkDesc, d.real.clazz);
             }
