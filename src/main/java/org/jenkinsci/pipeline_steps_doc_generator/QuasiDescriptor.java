@@ -20,8 +20,8 @@ public class QuasiDescriptor {
     }
 
     public String getSymbol() {
-        if (real instanceof StepDescriptor) {
-            return ((StepDescriptor) real).getFunctionName();
+        if (real instanceof StepDescriptor descriptor) {
+            return descriptor.getFunctionName();
         } else {
             Set<String> symbolValues = SymbolLookup.getSymbolValue(real);
             if (!symbolValues.isEmpty()) {
