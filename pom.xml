@@ -26,6 +26,7 @@
     <revision>1.0</revision>
     <changelist>-SNAPSHOT</changelist>
     <gitHubRepo>jenkins-infra/${project.artifactId}</gitHubRepo>
+    <maven.compiler.release>17</maven.compiler.release>
     <spotless.check.skip>false</spotless.check.skip>
   </properties>
 
