@@ -11,4 +11,4 @@ updates:
   - dependencies
   ignore:
   # the dependency is actually provided by the Web container, hence it is aligned with Jetty. See https://github.com/jenkinsci/jenkins/pull/5211
-  - dependency-name: "javax.servlet:javax.servlet-api"
+  - dependency-name: "jakarta.servlet:jakarta.servlet-api"
