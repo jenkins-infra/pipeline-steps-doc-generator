@@ -79,6 +79,7 @@
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>structs</artifactId>
+      <!-- TODO: Replace with released version of structs plugin https://github.com/jenkinsci/structs-plugin/pull/233 -->
       <version>349.v31b_9243221b_5</version>
     </dependency>
     <dependency>
