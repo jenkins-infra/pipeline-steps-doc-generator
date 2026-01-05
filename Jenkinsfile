@@ -31,11 +31,11 @@ pipeline {
                             url:'https://github.com/jenkinsci/backend-extension-indexer.git',
                         branch: 'master'
                     script {
-                        infra.runMaven(['clean', 'install', '-DskipTests'], 17)
+                        infra.runMaven(['clean', 'install', '-DskipTests'], 21)
                     }
-		    withEnv(['JAVA_HOME=/opt/jdk-17','PATH+JDK21=/opt/jdk-17/bin']) {
-			sh 'java -XshowSettings:vm -jar ./target/*-bin/extension-indexer*.jar -plugins ./plugins && mv plugins ..'
-		    }
+                    withEnv(['JAVA_HOME=/opt/jdk-21','PATH+JDK21=/opt/jdk-21/bin']) {
+                        sh 'java -XshowSettings:vm -jar ./target/*-bin/extension-indexer*.jar -plugins ./plugins && mv plugins ..'
+                    }
                 }
             }
         }
@@ -45,11 +45,11 @@ pipeline {
                 dir('docFolder') {
                     checkout scm
                     script {
-                        infra.runMaven(['clean', 'install', '-DskipTests'], 17)
+                        infra.runMaven(['clean', 'install', '-DskipTests'], 21)
                     }
-		    withEnv(['JAVA_HOME=/opt/jdk-17','PATH+JDK21=/opt/jdk-17/bin']) {
+                    withEnv(['JAVA_HOME=/opt/jdk-21','PATH+JDK21=/opt/jdk-21/bin']) {
                         sh 'mv ../plugins . && java -XshowSettings:vm -jar ./target/*-bin/pipeline-steps-doc-generator*.jar'
-		    }
+                    }
                 }
             }
         }
