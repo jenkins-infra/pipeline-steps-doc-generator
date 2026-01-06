@@ -34,7 +34,7 @@ pipeline {
                         infra.runMaven(['clean', 'install', '-DskipTests'], 21)
                     }
                     withEnv(['JAVA_HOME=/opt/jdk-21','PATH+JDK21=/opt/jdk-21/bin']) {
-                        sh 'java -XshowSettings:vm -jar ./target/*-bin/extension-indexer*.jar -plugins ./plugins && mv plugins ..'
+                        sh 'java -jar ./target/*-bin/extension-indexer*.jar -plugins ./plugins && mv plugins ..'
                     }
                 }
             }
@@ -48,7 +48,7 @@ pipeline {
                         infra.runMaven(['clean', 'install', '-DskipTests'], 21)
                     }
                     withEnv(['JAVA_HOME=/opt/jdk-21','PATH+JDK21=/opt/jdk-21/bin']) {
-                        sh 'mv ../plugins . && java -XshowSettings:vm -jar ./target/*-bin/pipeline-steps-doc-generator*.jar'
+                        sh 'mv ../plugins . && java -jar ./target/*-bin/pipeline-steps-doc-generator*.jar'
                     }
                 }
             }
