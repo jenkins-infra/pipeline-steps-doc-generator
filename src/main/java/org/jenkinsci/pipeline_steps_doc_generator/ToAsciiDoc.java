@@ -92,26 +92,26 @@ public class ToAsciiDoc {
 
     String describeType(ParameterType type, String prefix) throws Exception {
         StringBuilder typeInfo = new StringBuilder();
-        if (type instanceof EnumType) {
+        if (type instanceof EnumType enumType) {
             typeInfo.append("<li><b>")
                     .append(prefix)
                     .append("Values:</b> ")
-                    .append(Arrays.stream((((EnumType) type).getValues()))
+                    .append(Arrays.stream((enumType.getValues()))
                             .map(v -> "<code>" + v + "</code>")
                             .collect(Collectors.joining(", ")))
                     .append("</li>");
-        } else if (type instanceof ArrayType) {
-            type = ((ArrayType) type).getElementType();
+        } else if (type instanceof ArrayType arrayType) {
+            type = arrayType.getElementType();
             if (!(type instanceof AtomicType)) {
                 typeInfo.append(describeType(type, ARRAY_LIST_OF + prefix));
             }
-        } else if (type instanceof HomogeneousObjectType) {
+        } else if (type instanceof HomogeneousObjectType objectType) {
             typeInfo.append("<b>")
                     .append(prefix)
                     .append("Nested Object</b>\n")
                     // TODO may need to note a symbol if present
-                    .append(generateHelp(((HomogeneousObjectType) type).getSchemaType(), false));
-        } else if (type instanceof HeterogeneousObjectType) {
+                    .append(generateHelp(objectType.getSchemaType(), false));
+        } else if (type instanceof HeterogeneousObjectType objectType) {
             typeInfo.append("<b>").append(prefix).append("Nested Choice of Objects</b>\n");
             HeterogeneousObjectType heterogeneousObjectType = (HeterogeneousObjectType) type;
             if (heterogeneousObjectType.getType() != Object.class) {
@@ -148,8 +148,8 @@ public class ToAsciiDoc {
                     }
                 }
             }
-        } else if (type instanceof ErrorType) { // Shouldn't hit this; open a ticket
-            Exception x = ((ErrorType) type).getError();
+        } else if (type instanceof ErrorType errorType) { // Shouldn't hit this; open a ticket
+            Exception x = errorType.getError();
             LOG.log(Level.FINE, "Encountered ErrorType object with exception:" + x);
             if (x instanceof NoStaplerConstructorException || x instanceof UnsupportedOperationException) {
                 typeInfo.append("<li><b>Type:</b> <code>")
@@ -228,8 +228,8 @@ public class ToAsciiDoc {
                 ParameterType type = param.getType();
                 if (type instanceof AtomicType) {
                     typeDesc = " : " + type;
-                } else if (type instanceof ArrayType) {
-                    type = ((ArrayType) type).getElementType();
+                } else if (type instanceof ArrayType arrayType) {
+                    type = arrayType.getElementType();
                     if (type instanceof AtomicType) {
                         typeDesc = " : " + ARRAY_LIST_OF + type;
                     }
@@ -303,8 +303,8 @@ public class ToAsciiDoc {
             if (delegateExample.isPresent()) {
                 mkDesc.append(getHelp("help.html", d.real.clazz));
                 String symbol = new QuasiDescriptor(delegateExample.get(), (StepDescriptor) d.real).getSymbol();
-                mkDesc.append(String.format(
-                        "To use this step you need to specify a delegate class, e.g <code>%s</code>.", symbol));
+                mkDesc.append("To use this step you need to specify a delegate class, e.g <code>%s</code>."
+                        .formatted(symbol));
             } else {
                 appendSimpleStepDescription(mkDesc, d.real.clazz);
             }

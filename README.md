@@ -1,4 +1,4 @@
-# pipeline-steps-doc-generator
+# Pipeline steps documentation generator
 
 This project generates the documentation for pipeline jobs.
 
@@ -41,18 +41,18 @@ but uses the AsciiDoc for the `schedule-build-plugin` generated locally.
 
 ```diff
 -  [
--    'https://ci.jenkins.io/job/Infra/job/pipeline-steps-doc-generator/job/master/lastSuccessfulBuild/artifact/allAscii.zip',
+-    'https://reports.jenkins.io/allAscii.zip',
 -    'content/_tmp/allAscii.zip',
 -    nil,
 -    'content/doc/pipeline/steps'
 -  ],
 
-+ # [
-+ #   'https://ci.jenkins.io/job/Infra/job/pipeline-steps-doc-generator/job/master/lastSuccessfulBuild/artifact/allAscii.zip',
-+ #   'content/_tmp/allAscii.zip',
-+ #   nil,
-+ #   'content/doc/pipeline/steps'
-+ # ],
++  # [
++  #   'https://reports.jenkins.io/allAscii.zip',
++  #   'content/_tmp/allAscii.zip',
++  #   nil,
++  #   'content/doc/pipeline/steps'
++  # ],
 ```
 
 ### 4. Create `Makefile`

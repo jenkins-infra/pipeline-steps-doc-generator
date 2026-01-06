@@ -1,6 +1,14 @@
 <?xml version="1.0"?>
 <FindBugsFilter>
   <!--
+    Exclusions in this section have been triaged and determined to be
+    false positives.
+  -->
+  <Match>
+    <!-- XML/HTML generation is the purpose of this tool -->
+    <Bug pattern="POTENTIAL_XML_INJECTION"/>
+  </Match>
+  <!--
     Here lies technical debt. Exclusions in this section have not yet been triaged. When working on
     on this section, pick an exclusion to triage, then:
     - If it is a false positive, add a @SuppressFBWarnings(value = "[…]", justification = "[…]")

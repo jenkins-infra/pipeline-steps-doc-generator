@@ -3,6 +3,7 @@ package org.jenkinsci.pipeline_steps_doc_generator;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.MockJenkins;
 import hudson.PluginWrapper;
 import hudson.init.InitMilestone;
@@ -90,6 +91,7 @@ public class PipelineStepExtractor {
         System.exit(0); // otherwise environment hangs around
     }
 
+    @SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", justification = "Retain API compatibility")
     public HyperLocalPluginManager pluginManager;
 
     public Map<String, Map<String, List<QuasiDescriptor>>> findSteps() {
@@ -156,7 +158,7 @@ public class PipelineStepExtractor {
     }
 
     protected static Stream<Descriptor<?>> getMetaDelegates(Descriptor<?> d) {
-        if (d instanceof StepDescriptor && ((StepDescriptor) d).isMetaStep()) {
+        if (d instanceof StepDescriptor descriptor && descriptor.isMetaStep()) {
             DescribableModel<?> m = DescribableModel.of(d.clazz);
             Collection<DescribableParameter> parameters = m.getParameters();
             if (parameters.size() == 1) {
