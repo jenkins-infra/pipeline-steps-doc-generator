@@ -111,9 +111,8 @@ public class ToAsciiDoc {
                     .append("Nested Object</b>\n")
                     // TODO may need to note a symbol if present
                     .append(generateHelp(objectType.getSchemaType(), false));
-        } else if (type instanceof HeterogeneousObjectType objectType) {
+        } else if (type instanceof HeterogeneousObjectType heterogeneousObjectType) {
             typeInfo.append("<b>").append(prefix).append("Nested Choice of Objects</b>\n");
-            HeterogeneousObjectType heterogeneousObjectType = (HeterogeneousObjectType) type;
             if (heterogeneousObjectType.getType() != Object.class) {
                 for (Map.Entry<String, DescribableModel<?>> entry :
                         heterogeneousObjectType.getTypes().entrySet()) {
